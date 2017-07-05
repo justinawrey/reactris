@@ -22,10 +22,10 @@ class App extends Component {
         ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
         ["e", "x", "e", "e", "e", "e", "e", "e", "e", "e"],
         ["e", "x", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "e", "f", "f"],
-        ["e", "x", "x", "x", "x", "e", "e", "e", "f", "f"],
+        ["e", "x", "e", "e", "e", "e", "e", "f", "e", "e"],
+        ["e", "x", "e", "e", "e", "e", "e", "f", "f", "e"],
+        ["e", "x", "e", "e", "e", "e", "e", "e", "f", "e"],
+        ["e", "x", "x", "x", "x", "e", "e", "e", "e", "e"],
         ["e", "e", "e", "x", "e", "e", "e", "e", "e", "e"],
         ["x", "x", "x", "x", "x", "x", "x", "x", "e", "e"],
         ["x", "x", "x", "x", "x", "x", "x", "x", "e", "e"]],
@@ -33,6 +33,7 @@ class App extends Component {
       score: 0,
       nextPiece: null
     };
+    setInterval(() => this.tick(), 1000);
   }
 
   //a single game move
@@ -49,32 +50,27 @@ class App extends Component {
   //let a piece fall if it can, and return new state for rendering
   letPieceFallAndPotentiallyLock(state) {
     //bump piece down one row.  check 5 rows upwards because 5 rows is max piece size
+    //if we hit something, raise a lock signal
     let retState = state;
+    let lock = false;
     for (let j = retState.activePieceBottom; j > retState.activePieceBottom - 5; j--) {
       if (j >= 0) {
         for (let i = 0; i < 10; i++) {
           if ((retState.data[j])[i] === 'f') {
             (retState.data[j])[i] = 'e';
             (retState.data[j + 1])[i] = 'f';
+            if(j + 2 <= 21 && (retState.data[j + 2])[i] === 'x'){ // check if we hit a piece
+              lock = true;
+            }
           }
         }
       }
     }
     retState.activePieceBottom++;
 
-    //check if we hit bottom, and lock if we did
-    if (retState.activePieceBottom === 21) {
+    //check if we hit bottom or hit a piece, and lock if we did
+    if (retState.activePieceBottom === 21 || lock) {
       return this.swapFallingToLocked(retState);
-    }
-
-    const rowToCheck = retState.data[retState.activePieceBottom];
-    const nextRow = retState.data[retState.activePieceBottom + 1];
-
-    //check if we hit another tile, and lock if we did
-    for (let i = 0; i < 10; i++) {
-      if (rowToCheck[i] === 'f' && nextRow[i] === 'x') { //hit a tile
-        return this.swapFallingToLocked(retState);
-      }
     }
 
     return retState;
