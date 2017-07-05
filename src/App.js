@@ -39,28 +39,11 @@ class App extends Component {
   tick() {
     let newState;
     newState = this.letPieceFallAndPotentiallyLock(this.state); //let piece fall
-    console.log(newState);
     newState = this.checkForClearAndBumpDown(newState); //check for line clears
-    console.log(newState);
+    newState = this.generateNewPiece(newState); //generate a new falling piece
 
     //set new state ONLY ONCE
     this.setState(newState);
-  }
-
-  //check if any rows are cleared, give points, and return new state for rendering
-  checkForClearAndBumpDown(state) {
-    let retState = state;
-    retState.data = retState.data.filter(row => {
-      return !row.every(tile => {return tile === 'x'});
-    });
-
-    //increment score and fill more blank tiles
-    while(retState.data.length < 22){
-      retState.data.unshift(Array(10).fill('e'));
-      retState.score += 100;
-    }
-
-    return retState;
   }
 
   //let a piece fall if it can, and return new state for rendering
@@ -80,7 +63,7 @@ class App extends Component {
     retState.activePieceBottom++;
 
     //check if we hit bottom, and lock if we did
-    if(retState.activePieceBottom === 21){
+    if (retState.activePieceBottom === 21) {
       return this.swapFallingToLocked(retState);
     }
 
@@ -94,6 +77,89 @@ class App extends Component {
       }
     }
 
+    return retState;
+  }
+
+  //check if any rows are cleared, give points, and return new state for rendering
+  checkForClearAndBumpDown(state) {
+    let retState = state;
+    retState.data = retState.data.filter(row => {
+      return !row.every(tile => {
+        return tile === 'x'
+      });
+    });
+
+    //increment score and fill more blank tiles
+    while (retState.data.length < 22) {
+      retState.data.unshift(Array(10).fill('e'));
+      retState.score += 100;
+    }
+
+    return retState;
+  }
+
+  //return new state for rendering with new piece falling on top
+  generateNewPiece(state) {
+    let retState = state;
+
+    //check for no falling pieces before generating a new one
+    if (retState.data.every(row => {return row.every(tile => {return tile !== 'f'})})) {
+      switch (Math.floor(Math.random() * 7)) {
+        case 0: //o
+          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 1;
+          break;
+
+        case 1: //i
+          retState.data.splice(0, 4, ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 3;
+          break;
+
+        case 2: //s
+          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "f", "f", "e", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 1;
+          break;
+
+        case 3: //z
+          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "f", "e", "e", "e"]);
+          retState.activePieceBottom = 1;
+          break;
+
+        case 4: //l
+          retState.data.splice(0, 4, ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 3;
+          break;
+
+        case 5: //j
+          retState.data.splice(0, 4, ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 3
+          break;
+
+        case 6: //t
+          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 1;
+          break;
+
+        default: //default to t shape
+          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
+                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]);
+          retState.activePieceBottom = 1;
+          break;
+      }
+    }
     return retState;
   }
 
