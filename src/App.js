@@ -6,34 +6,20 @@ import './App.css'
 class App extends Component {
   constructor(props) {
     super(props);
+
+    //initialize array of arrays 22 x 10 filled with 'e' for empty tile
+    let initData = new Array();
+    for (let i = 0; i < 22; i++){
+      initData.push(new Array(10).fill('e'));
+    }
+
     this.state = {
-      data: [["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "e", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "f", "e", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "f", "f", "e"],
-        ["e", "x", "e", "e", "e", "e", "e", "e", "f", "e"],
-        ["e", "x", "x", "x", "x", "e", "e", "e", "e", "e"],
-        ["e", "e", "e", "x", "e", "e", "e", "e", "e", "e"],
-        ["x", "x", "x", "x", "x", "x", "x", "x", "e", "e"],
-        ["x", "x", "x", "x", "x", "x", "x", "x", "e", "e"]],
-      activePieceBottom: 18,
+      data: initData,
+      activePieceBottom: 0,
       score: 0,
-      nextPiece: null
+      nextPiece: Math.floor(Math.random() * 7)
     };
-    setInterval(() => this.tick(), 1000);
+    //setInterval(() => this.tick(), 1000);
   }
 
   //a single game move
@@ -100,7 +86,7 @@ class App extends Component {
 
     //check for no falling pieces before generating a new one
     if (retState.data.every(row => {return row.every(tile => {return tile !== 'f'})})) {
-      switch (Math.floor(Math.random() * 7)) {
+      switch (retState.nextPiece) {
         case 0: //o
           retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
                                      ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
@@ -155,6 +141,7 @@ class App extends Component {
           retState.activePieceBottom = 1;
           break;
       }
+      retState.nextPiece = Math.floor(Math.random() * 7);
     }
     return retState;
   }
@@ -178,6 +165,9 @@ class App extends Component {
       return <Row rowData={row} key={index}/>;
     });
 
+    const pieces = ['o', 'i', 's', 'z', 'l', 'j', 't'];
+    let dispNextPiece = pieces[this.state.nextPiece];
+
     //render app
     return (
       <div className="app">
@@ -198,7 +188,7 @@ class App extends Component {
             <h3>NEXT PIECE</h3>
           </div>
           <div className="next-piece-slot">
-            hello
+            {dispNextPiece}
           </div>
         </div>
       </div>
