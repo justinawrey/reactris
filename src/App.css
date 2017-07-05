@@ -1,0 +1,17 @@
+.app {
+}
+
+.app-header{
+}
+
+.game-board{
+}
+
+.next-piece-header{
+}
+
+.next-piece-slot{
+background-color: lightgrey;
+width: 150px;
+height: 150px;
+}
