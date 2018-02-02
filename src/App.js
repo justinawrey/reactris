@@ -13,14 +13,25 @@ class App extends Component {
             data: this.initializeEmptyBoard(),
             activePieceBottom: 0,
             score: 0,
-            nextPiece: Math.floor(Math.random() * 7)
+            nextPiece: this.chooseRandomNewPiece()
+        };
+    }
+
+    newTileObj(type, isPivot=false) {
+        return {
+            type: type,
+            isPivot: isPivot
         };
     }
 
     initializeEmptyBoard() {
         return Array(22)
             .fill()
-            .map(() => Array(10).fill("e"));
+            .map(() => Array(10).fill(this.newTileObj("empty")));
+    }
+
+    chooseRandomNewPiece() {
+        return this.pieces[Math.floor(Math.random() * 7)];
     }
 
     //a single game move
@@ -38,19 +49,22 @@ class App extends Component {
     letPieceFallAndPotentiallyLock(state) {
         //bump piece down one row.  check 5 rows upwards because 5 rows is max piece size
         //if we hit something, raise a lock signal
-        let retState = state;
+        let newState = state;
         let lock = false;
         for (
-            let j = retState.activePieceBottom;
-            j > retState.activePieceBottom - 5;
+            let j = newState.activePieceBottom;
+            j > newState.activePieceBottom - 5;
             j--
         ) {
             if (j >= 0) {
                 for (let i = 0; i < 10; i++) {
-                    if (retState.data[j][i] === "f") {
-                        retState.data[j][i] = "e";
-                        retState.data[j + 1][i] = "f";
-                        if (j + 2 <= 21 && retState.data[j + 2][i] === "x") {
+                    if (newState.data[j][i] === this.newTileObj("falling")) {
+                        newState.data[j][i] = this.newTileObj("empty");
+                        newState.data[j + 1][i] = this.newTileObj("falling");
+                        if (
+                            j + 2 <= 21 &&
+                            newState.data[j + 2][i].type === "locked"
+                        ) {
                             // check if we hit a piece
                             lock = true;
                         }
@@ -58,148 +72,136 @@ class App extends Component {
                 }
             }
         }
-        retState.activePieceBottom++;
+        newState.activePieceBottom++;
 
         //check if we hit bottom or hit a piece, and lock if we did
-        if (retState.activePieceBottom === 21 || lock) {
-            return this.swapFallingToLocked(retState);
+        if (newState.activePieceBottom === 21 || lock) {
+            return this.swapFallingToLocked(newState);
         }
 
-        return retState;
+        return newState;
     }
 
     //check if any rows are cleared, give points, and return new state for rendering
     checkForClearAndBumpDown(state) {
-        let retState = state;
-        retState.data = retState.data.filter(row => {
+        let newState = state;
+        newState.data = newState.data.filter(row => {
             return !row.every(tile => {
-                return tile === "x";
+                return tile.type === "locked";
             });
         });
 
         //increment score and fill more blank tiles
-        while (retState.data.length < 22) {
-            retState.data.unshift(Array(10).fill("e"));
-            retState.score += 100;
+        while (newState.data.length < 22) {
+            newState.data.unshift(Array(10).fill(this.newTileObj("empty")));
+            newState.score += 100;
         }
 
-        return retState;
+        return newState;
     }
 
     //return new state for rendering with new piece falling on top
     generateNewPiece(state) {
-        let retState = state;
+        let newState = state;
 
         //check for no falling pieces before generating a new one
         if (
-            retState.data.every(row => {
+            newState.data.every(row => {
                 return row.every(tile => {
-                    return tile !== "f";
+                    return tile.type !== "falling";
                 });
             })
         ) {
-            switch (retState.nextPiece) {
-                case 0: //o
-                    retState.data.splice(
+            switch (newState.nextPiece) {
+                case "o":
+                    newState.data.splice(
                         0,
                         2,
-                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
+                        ["e", "e", "e", "e", "fp", "fp", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "fp", "fp", "e", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 1;
+                    newState.activePieceBottom = 1;
                     break;
 
-                case 1: //i
-                    retState.data.splice(
+                case "i":
+                    newState.data.splice(
                         0,
                         4,
                         ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "fp", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 3;
+                    newState.activePieceBottom = 3;
                     break;
 
-                case 2: //s
-                    retState.data.splice(
+                case "s":
+                    newState.data.splice(
                         0,
                         2,
-                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "fp", "f", "e", "e", "e", "e"],
                         ["e", "e", "e", "f", "f", "e", "e", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 1;
+                    newState.activePieceBottom = 1;
                     break;
 
-                case 3: //z
-                    retState.data.splice(
+                case "z": //z
+                    newState.data.splice(
                         0,
                         2,
-                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "fp", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "e", "f", "f", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 1;
+                    newState.activePieceBottom = 1;
                     break;
 
-                case 4: //l
-                    retState.data.splice(
+                case "l": //l
+                    newState.data.splice(
                         0,
                         4,
                         ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "fp", "e", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 3;
+                    newState.activePieceBottom = 3;
                     break;
 
-                case 5: //j
-                    retState.data.splice(
+                case "j": //j
+                    newState.data.splice(
                         0,
                         4,
                         ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "fp", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
                         ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 3;
+                    newState.activePieceBottom = 3;
                     break;
 
-                case 6: //t
-                    retState.data.splice(
-                        0,
-                        2,
-                        ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
-                    );
-                    retState.activePieceBottom = 1;
-                    break;
-
+                case "t": //t
                 default:
-                    //default to t shape
-                    retState.data.splice(
+                    newState.data.splice(
                         0,
                         2,
-                        ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "fp", "f", "e", "e", "e"],
                         ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
                     );
-                    retState.activePieceBottom = 1;
-                    break;
+                    newState.activePieceBottom = 1;
             }
-            retState.nextPiece = Math.floor(Math.random() * 7);
         }
-        return retState;
+        newState.nextPiece = this.chooseRandomNewPiece();
     }
 
     //return new state with all 'f' changed to 'x'
     swapFallingToLocked(state) {
-        let retState = state;
-        retState.data = retState.data.map(row => {
+        let newState = state;
+        newState.data = newState.data.map(row => {
             return row.map(tile => {
-                return tile === "f" ? "x" : tile;
+                return tile.type === "falling" ? this.newTileObj("locked") : tile;
             });
         });
-        return retState;
+        return newState;
     }
 
     //render app
@@ -208,9 +210,6 @@ class App extends Component {
         const rowsToRender = this.state.data.map((row, index) => {
             return <Row rowData={row} key={index} />;
         });
-
-        const pieces = ["o", "i", "s", "z", "l", "j", "t"];
-        let dispNextPiece = pieces[this.state.nextPiece];
 
         //render app
         return (
@@ -229,7 +228,9 @@ class App extends Component {
                     <div className="next-piece-header">
                         <h3>NEXT PIECE</h3>
                     </div>
-                    <div className="next-piece-slot">{dispNextPiece}</div>
+                    <div className="next-piece-slot">
+                        {this.state.nextPiece}
+                    </div>
                 </div>
             </div>
         );

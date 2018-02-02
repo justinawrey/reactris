@@ -4,8 +4,8 @@ import "./Row.css";
 
 class Row extends Component {
   render() {
-    const tiles = this.props.rowData.map((tileStatus, index) => {
-      return <Tile type={tileStatus} key={index}/>;
+    const tiles = this.props.rowData.map((tileObj, index) => {
+      return <Tile type={tileObj.type} isPivot={tileObj.isPivot} key={index}/>;
     });
     return (
       <div className="row">

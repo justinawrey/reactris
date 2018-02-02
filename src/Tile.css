@@ -1,21 +1,23 @@
 /* falling tile */
-.f , .e, .x{
-  border: 1px solid black;
-  display: inline-block;
-  width: 25px;
-  height: 25px;
-  margin: 1px;  
+.falling,
+.empty,
+.locked {
+    border: 1px solid black;
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    margin: 1px;
 }
 
-.f {
-  background-color: lightgreen;
+.falling {
+    background-color: lightgreen;
 }
 /* empty tile */
-.e {
-  background-color: lightgrey;
+.empty {
+    background-color: lightgrey;
 }
 
 /* locked tile */
-.x {
-  background-color: pink;
+.locked {
+    background-color: pink;
 }
