@@ -1,199 +1,239 @@
-import React, { Component } from 'react';
-import { Row } from './Tile';
-import { Score } from './Score'
-import './App.css'
+import React, { Component } from "react";
+import { Tile } from "./Tile";
+import { Row } from "./Row";
+import { Score } from "./Score";
+import "./App.css";
 
 class App extends Component {
-  constructor(props) {
-    super(props);
+    constructor(props) {
+        super(props);
 
-    //initialize array of arrays 22 x 10 filled with 'e' for empty tile
-    let initData = new Array();
-    for (let i = 0; i < 22; i++){
-      initData.push(new Array(10).fill('e'));
+        this.pieces = ["o", "i", "s", "z", "l", "j", "t"];
+        this.state = {
+            data: this.initializeEmptyBoard(),
+            activePieceBottom: 0,
+            score: 0,
+            nextPiece: Math.floor(Math.random() * 7)
+        };
     }
 
-    this.state = {
-      data: initData,
-      activePieceBottom: 0,
-      score: 0,
-      nextPiece: Math.floor(Math.random() * 7)
-    };
-    //setInterval(() => this.tick(), 1000);
-  }
+    initializeEmptyBoard() {
+        return Array(22)
+            .fill()
+            .map(() => Array(10).fill("e"));
+    }
 
-  //a single game move
-  tick() {
-    let newState;
-    newState = this.letPieceFallAndPotentiallyLock(this.state); //let piece fall
-    newState = this.checkForClearAndBumpDown(newState); //check for line clears
-    newState = this.generateNewPiece(newState); //generate a new falling piece
+    //a single game move
+    tick() {
+        let newState;
+        newState = this.letPieceFallAndPotentiallyLock(this.state); //let piece fall
+        newState = this.checkForClearAndBumpDown(newState); //check for line clears
+        newState = this.generateNewPiece(newState); //generate a new falling piece
 
-    //set new state ONLY ONCE
-    this.setState(newState);
-  }
+        //set new state ONLY ONCE
+        this.setState(newState);
+    }
 
-  //let a piece fall if it can, and return new state for rendering
-  letPieceFallAndPotentiallyLock(state) {
-    //bump piece down one row.  check 5 rows upwards because 5 rows is max piece size
-    //if we hit something, raise a lock signal
-    let retState = state;
-    let lock = false;
-    for (let j = retState.activePieceBottom; j > retState.activePieceBottom - 5; j--) {
-      if (j >= 0) {
-        for (let i = 0; i < 10; i++) {
-          if ((retState.data[j])[i] === 'f') {
-            (retState.data[j])[i] = 'e';
-            (retState.data[j + 1])[i] = 'f';
-            if(j + 2 <= 21 && (retState.data[j + 2])[i] === 'x'){ // check if we hit a piece
-              lock = true;
+    //let a piece fall if it can, and return new state for rendering
+    letPieceFallAndPotentiallyLock(state) {
+        //bump piece down one row.  check 5 rows upwards because 5 rows is max piece size
+        //if we hit something, raise a lock signal
+        let retState = state;
+        let lock = false;
+        for (
+            let j = retState.activePieceBottom;
+            j > retState.activePieceBottom - 5;
+            j--
+        ) {
+            if (j >= 0) {
+                for (let i = 0; i < 10; i++) {
+                    if (retState.data[j][i] === "f") {
+                        retState.data[j][i] = "e";
+                        retState.data[j + 1][i] = "f";
+                        if (j + 2 <= 21 && retState.data[j + 2][i] === "x") {
+                            // check if we hit a piece
+                            lock = true;
+                        }
+                    }
+                }
             }
-          }
         }
-      }
-    }
-    retState.activePieceBottom++;
+        retState.activePieceBottom++;
 
-    //check if we hit bottom or hit a piece, and lock if we did
-    if (retState.activePieceBottom === 21 || lock) {
-      return this.swapFallingToLocked(retState);
-    }
+        //check if we hit bottom or hit a piece, and lock if we did
+        if (retState.activePieceBottom === 21 || lock) {
+            return this.swapFallingToLocked(retState);
+        }
 
-    return retState;
-  }
-
-  //check if any rows are cleared, give points, and return new state for rendering
-  checkForClearAndBumpDown(state) {
-    let retState = state;
-    retState.data = retState.data.filter(row => {
-      return !row.every(tile => {
-        return tile === 'x'
-      });
-    });
-
-    //increment score and fill more blank tiles
-    while (retState.data.length < 22) {
-      retState.data.unshift(Array(10).fill('e'));
-      retState.score += 100;
+        return retState;
     }
 
-    return retState;
-  }
+    //check if any rows are cleared, give points, and return new state for rendering
+    checkForClearAndBumpDown(state) {
+        let retState = state;
+        retState.data = retState.data.filter(row => {
+            return !row.every(tile => {
+                return tile === "x";
+            });
+        });
 
-  //return new state for rendering with new piece falling on top
-  generateNewPiece(state) {
-    let retState = state;
+        //increment score and fill more blank tiles
+        while (retState.data.length < 22) {
+            retState.data.unshift(Array(10).fill("e"));
+            retState.score += 100;
+        }
 
-    //check for no falling pieces before generating a new one
-    if (retState.data.every(row => {return row.every(tile => {return tile !== 'f'})})) {
-      switch (retState.nextPiece) {
-        case 0: //o
-          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 1;
-          break;
-
-        case 1: //i
-          retState.data.splice(0, 4, ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 3;
-          break;
-
-        case 2: //s
-          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "f", "f", "e", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 1;
-          break;
-
-        case 3: //z
-          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "f", "e", "e", "e"]);
-          retState.activePieceBottom = 1;
-          break;
-
-        case 4: //l
-          retState.data.splice(0, 4, ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 3;
-          break;
-
-        case 5: //j
-          retState.data.splice(0, 4, ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 3
-          break;
-
-        case 6: //t
-          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 1;
-          break;
-
-        default: //default to t shape
-          retState.data.splice(0, 2, ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
-                                     ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]);
-          retState.activePieceBottom = 1;
-          break;
-      }
-      retState.nextPiece = Math.floor(Math.random() * 7);
+        return retState;
     }
-    return retState;
-  }
 
-  //return new state with all 'f' changed to 'x'
-  swapFallingToLocked(state) {
-    let retState = state;
-    retState.data = retState.data.map(row => {
-      return row.map(tile => {
-        return tile === 'f' ? 'x' : tile
-      });
-    });
-    return retState;
-  }
+    //return new state for rendering with new piece falling on top
+    generateNewPiece(state) {
+        let retState = state;
 
+        //check for no falling pieces before generating a new one
+        if (
+            retState.data.every(row => {
+                return row.every(tile => {
+                    return tile !== "f";
+                });
+            })
+        ) {
+            switch (retState.nextPiece) {
+                case 0: //o
+                    retState.data.splice(
+                        0,
+                        2,
+                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 1;
+                    break;
 
-  //render app
-  render() {
-    //get rows to render
-    const rowsToRender = this.state.data.map((row, index) => {
-      return <Row rowData={row} key={index}/>;
-    });
+                case 1: //i
+                    retState.data.splice(
+                        0,
+                        4,
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 3;
+                    break;
 
-    const pieces = ['o', 'i', 's', 'z', 'l', 'j', 't'];
-    let dispNextPiece = pieces[this.state.nextPiece];
+                case 2: //s
+                    retState.data.splice(
+                        0,
+                        2,
+                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "f", "f", "e", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 1;
+                    break;
+
+                case 3: //z
+                    retState.data.splice(
+                        0,
+                        2,
+                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "f", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 1;
+                    break;
+
+                case 4: //l
+                    retState.data.splice(
+                        0,
+                        4,
+                        ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 3;
+                    break;
+
+                case 5: //j
+                    retState.data.splice(
+                        0,
+                        4,
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
+                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 3;
+                    break;
+
+                case 6: //t
+                    retState.data.splice(
+                        0,
+                        2,
+                        ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 1;
+                    break;
+
+                default:
+                    //default to t shape
+                    retState.data.splice(
+                        0,
+                        2,
+                        ["e", "e", "e", "e", "f", "f", "f", "e", "e", "e"],
+                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
+                    );
+                    retState.activePieceBottom = 1;
+                    break;
+            }
+            retState.nextPiece = Math.floor(Math.random() * 7);
+        }
+        return retState;
+    }
+
+    //return new state with all 'f' changed to 'x'
+    swapFallingToLocked(state) {
+        let retState = state;
+        retState.data = retState.data.map(row => {
+            return row.map(tile => {
+                return tile === "f" ? "x" : tile;
+            });
+        });
+        return retState;
+    }
 
     //render app
-    return (
-      <div className="app">
-        <div className="col1">
-          <div className="app-header">
-            <h2>REACTRIS</h2>
-          </div>
-          <div className="game-board">
-            {rowsToRender}
-          </div>
-          <button onClick={() => this.tick()}> tick </button>
-        </div>
-        <div className="col2">
-          <div className="score">
-            <Score value={this.state.score}/>
-          </div>
-          <div className="next-piece-header">
-            <h3>NEXT PIECE</h3>
-          </div>
-          <div className="next-piece-slot">
-            {dispNextPiece}
-          </div>
-        </div>
-      </div>
-      );
-  }
+    render() {
+        //get rows to render
+        const rowsToRender = this.state.data.map((row, index) => {
+            return <Row rowData={row} key={index} />;
+        });
+
+        const pieces = ["o", "i", "s", "z", "l", "j", "t"];
+        let dispNextPiece = pieces[this.state.nextPiece];
+
+        //render app
+        return (
+            <div className="app">
+                <div className="col1">
+                    <div className="app-header">
+                        <h2>REACTRIS</h2>
+                    </div>
+                    <div className="game-board">{rowsToRender}</div>
+                    <button onClick={() => this.tick()}> tick </button>
+                </div>
+                <div className="col2">
+                    <div className="score">
+                        <Score value={this.state.score} />
+                    </div>
+                    <div className="next-piece-header">
+                        <h3>NEXT PIECE</h3>
+                    </div>
+                    <div className="next-piece-slot">{dispNextPiece}</div>
+                </div>
+            </div>
+        );
+    }
 }
 
 export default App;
