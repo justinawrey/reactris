@@ -1,13 +1,13 @@
-.app {
+.flex-container {
+    display: flex; 
 }
 
-.app-header{
-}
+.col1, .col2 {
+    flex: 1;
+}   
 
-.game-board{
-}
-
-.next-piece-header{
+#title {
+    margin: 5px;
 }
 
 .next-piece-slot{

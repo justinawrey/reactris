@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import { Tile } from "./Tile";
 import { Row } from "./Row";
 import { Score } from "./Score";
 import "./App.css";
@@ -9,6 +8,8 @@ class App extends Component {
         super(props);
 
         this.pieces = ["o", "i", "s", "z", "l", "j", "t"];
+        this.maxRows = 22;
+        this.maxColumns = 10;
         this.state = {
             data: this.initializeEmptyBoard(),
             activePieceBottom: 0,
@@ -17,32 +18,53 @@ class App extends Component {
         };
     }
 
-    newTileObj(type, isPivot=false) {
+    newTileObj(type, isPivot = false) {
         return {
             type: type,
             isPivot: isPivot
         };
     }
 
+    getTileObj(x, y) {
+        return this.state.data[y][x];
+    }
+
     initializeEmptyBoard() {
-        return Array(22)
-            .fill()
-            .map(() => Array(10).fill(this.newTileObj("empty")));
+        let initData = [];
+        for (let row = 0; row < this.maxRows; row++) {
+            initData.push([]);
+            for (let col = 0; col < this.maxColumns; col++) {
+                initData[row].push(this.newTileObj("empty"));
+            }
+        }
+        return initData;
     }
 
     chooseRandomNewPiece() {
         return this.pieces[Math.floor(Math.random() * 7)];
     }
 
-    //a single game move
-    tick() {
-        let newState;
-        newState = this.letPieceFallAndPotentiallyLock(this.state); //let piece fall
-        newState = this.checkForClearAndBumpDown(newState); //check for line clears
-        newState = this.generateNewPiece(newState); //generate a new falling piece
+    movePiece(e) {
+        e.preventDefault();
+        if (e.key === "ArrowLeft") {
+            this.movePieceLeft();
+        } else if (e.key === "ArrowRight") {
+            this.movePieceRight();
+        } else if (e.key === "ArrowDown") {
+            this.movePieceDown();
+        }
+    }
 
-        //set new state ONLY ONCE
-        this.setState(newState);
+    movePieceRight() {
+        console.log("moving piece right");
+    }
+
+    movePieceDown() {
+        console.log("moving piece down");
+    }
+
+    movePieceLeft() {
+        console.log("moving piece left");
     }
 
     //let a piece fall if it can, and return new state for rendering
@@ -114,83 +136,75 @@ class App extends Component {
         ) {
             switch (newState.nextPiece) {
                 case "o":
-                    newState.data.splice(
-                        0,
-                        2,
-                        ["e", "e", "e", "e", "fp", "fp", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "fp", "fp", "e", "e", "e", "e"]
-                    );
+                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 0).isPivot = true;
+                    this.getTileObj(5, 0).type = "falling";
+                    this.getTileObj(5, 0).isPivot = true;
+                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 1).isPivot = true;
+                    this.getTileObj(5, 1).type = "falling";
+                    this.getTileObj(5, 1).isPivot = true;
                     newState.activePieceBottom = 1;
                     break;
 
                 case "i":
-                    newState.data.splice(
-                        0,
-                        4,
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "fp", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
-                    );
+                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 1).isPivot = true;;
+                    this.getTileObj(4, 2).type = "falling";
+                    this.getTileObj(4, 3).type = "falling";
                     newState.activePieceBottom = 3;
                     break;
 
                 case "s":
-                    newState.data.splice(
-                        0,
-                        2,
-                        ["e", "e", "e", "e", "fp", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "f", "f", "e", "e", "e", "e", "e"]
-                    );
+                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 0).isPivot = true;
+                    this.getTileObj(5, 0).type = "falling";
+                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(3, 1).type = "falling";
                     newState.activePieceBottom = 1;
                     break;
 
-                case "z": //z
-                    newState.data.splice(
-                        0,
-                        2,
-                        ["e", "e", "e", "e", "f", "fp", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "f", "e", "e", "e"]
-                    );
+                case "z":
+                    this.getTileObj(3, 0).type = "falling";
+                    this.getTileObj(4, 0).isPivot = "falling";
+                    this.getTileObj(4, 0).isPivot = true;
+                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(5, 1).type = "falling";
                     newState.activePieceBottom = 1;
                     break;
 
-                case "l": //l
-                    newState.data.splice(
-                        0,
-                        4,
-                        ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "fp", "e", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "f", "e", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
-                    );
-                    newState.activePieceBottom = 3;
+                case "l":
+                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 1).isPivot = true;
+                    this.getTileObj(4, 2).type = "falling";
+                    this.getTileObj(4, 3).type = "falling";
+                    this.getTileObj(5, 3).type = "falling";
                     break;
 
-                case "j": //j
-                    newState.data.splice(
-                        0,
-                        4,
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "fp", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"],
-                        ["e", "e", "e", "e", "f", "f", "e", "e", "e", "e"]
-                    );
+                case "j":
+                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 1).isPivot = true;
+                    this.getTileObj(4, 2).type = "falling";
+                    this.getTileObj(4, 3).type = "falling";
+                    this.getTileObj(3, 3).type = "falling";
                     newState.activePieceBottom = 3;
                     break;
 
                 case "t": //t
                 default:
-                    newState.data.splice(
-                        0,
-                        2,
-                        ["e", "e", "e", "e", "f", "fp", "f", "e", "e", "e"],
-                        ["e", "e", "e", "e", "e", "f", "e", "e", "e", "e"]
-                    );
+                    this.getTileObj(3, 0).type = "falling";
+                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 0).isPivot = true;
+                    this.getTileObj(5, 0).type = "falling";
+                    this.getTileObj(4, 1).type = "falling";
                     newState.activePieceBottom = 1;
             }
         }
         newState.nextPiece = this.chooseRandomNewPiece();
+        return newState;
     }
 
     //return new state with all 'f' changed to 'x'
@@ -204,6 +218,16 @@ class App extends Component {
         return newState;
     }
 
+    //a single game move
+    tick() {
+        //newState = this.letPieceFallAndPotentiallyLock(this.state); //let piece fall
+        // newState = this.checkForClearAndBumpDown(newState); //check for line clears
+        let newState = this.generateNewPiece(this.state); //generate a new falling piece
+
+        //set new state ONLY ONCE
+        this.setState(newState);
+    }
+
     //render app
     render() {
         //get rows to render
@@ -213,13 +237,12 @@ class App extends Component {
 
         //render app
         return (
-            <div className="app">
+            <div className="app flex-container" onKeyDown={(e) => this.movePiece(e)}>
                 <div className="col1">
                     <div className="app-header">
-                        <h2>REACTRIS</h2>
+                        <h2 id="title">REACTRIS</h2>
                     </div>
                     <div className="game-board">{rowsToRender}</div>
-                    <button onClick={() => this.tick()}> tick </button>
                 </div>
                 <div className="col2">
                     <div className="score">
@@ -231,6 +254,7 @@ class App extends Component {
                     <div className="next-piece-slot">
                         {this.state.nextPiece}
                     </div>
+                    <button onClick={() => this.tick()}> tick </button>
                 </div>
             </div>
         );
