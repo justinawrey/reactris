@@ -10,9 +10,13 @@ class App extends Component {
         this.pieces = ["o", "i", "s", "z", "l", "j", "t"];
         this.maxRows = 22;
         this.maxColumns = 10;
+        this.tileTypes = Object.freeze({
+            FALLING: "falling",
+            EMPTY: "empty",
+            LOCKED: "locked"
+        });
         this.state = {
             data: this.initializeEmptyBoard(),
-            activePieceBottom: 0,
             score: 0,
             nextPiece: this.chooseRandomNewPiece()
         };
@@ -34,7 +38,7 @@ class App extends Component {
         for (let row = 0; row < this.maxRows; row++) {
             initData.push([]);
             for (let col = 0; col < this.maxColumns; col++) {
-                initData[row].push(this.newTileObj("empty"));
+                initData[row].push(this.newTileObj(this.tileTypes.EMPTY));
             }
         }
         return initData;
@@ -46,25 +50,105 @@ class App extends Component {
 
     movePiece(e) {
         e.preventDefault();
+        const currPieceLocs = this.getCurrPieceLocs();
+        console.log(currPieceLocs);
         if (e.key === "ArrowLeft") {
-            this.movePieceLeft();
+            console.log("moving left")
+            this.movePieceLeft(currPieceLocs);
         } else if (e.key === "ArrowRight") {
-            this.movePieceRight();
+            console.log("moving right")
+            this.movePieceRight(currPieceLocs);
         } else if (e.key === "ArrowDown") {
-            this.movePieceDown();
+            console.log("moving down")
+            this.movePieceDown(currPieceLocs);
         }
     }
 
-    movePieceRight() {
-        console.log("moving piece right");
+    getCurrPieceLocs() {
+        let currPieceLocs = [];
+        for (let row = 0; row < this.maxRows; row++) {
+            for (let col = 0; col < this.maxColumns; col++) {
+                if (this.getTileObj(col, row).type === this.tileTypes.FALLING) {
+                    currPieceLocs.push({ x: col, y: row });
+                }
+            }
+        }
+        return currPieceLocs;
     }
 
-    movePieceDown() {
-        console.log("moving piece down");
+    movePieceLeft(currPieceLocs) {
+        if (currPieceLocs.every(tile => this.noCollisionLeft(tile.x, tile.y))) {
+            for (let i = 0; i < currPieceLocs.length; i++) {
+                let currTileObj = this.getTileObj(
+                    currPieceLocs[i].x,
+                    currPieceLocs[i].y
+                );
+                let swapTileObj = this.getTileObj(
+                    currPieceLocs[i].x - 1,
+                    currPieceLocs[i].y
+                );
+                currTileObj.type = this.tileTypes.EMPTY;
+                swapTileObj.type = this.tileTypes.FALLING;
+            }
+        }
     }
 
-    movePieceLeft() {
-        console.log("moving piece left");
+    movePieceRight(currPieceLocs) {
+        if (
+            currPieceLocs.every(tile => this.noCollisionRight(tile.x, tile.y))
+        ) {
+            for (let i = currPieceLocs.length - 1; i >= 0; i--) {
+                let currTileObj = this.getTileObj(
+                    currPieceLocs[i].x,
+                    currPieceLocs[i].y
+                );
+                let swapTileObj = this.getTileObj(
+                    currPieceLocs[i].x + 1,
+                    currPieceLocs[i].y
+                );
+                currTileObj.type = this.tileTypes.EMPTY;
+                swapTileObj.type = this.tileTypes.FALLING;
+            }
+        }
+    }
+
+    movePieceDown(currPieceLocs) {
+        if (currPieceLocs.every(tile => this.noCollisionDown(tile.x, tile.y))) {
+            console.log("its safe!");
+            for (let i = currPieceLocs.length - 1; i >= 0; i--) {
+                let currTileObj = this.getTileObj(
+                    currPieceLocs[i].x,
+                    currPieceLocs[i].y
+                );
+                let swapTileObj = this.getTileObj(
+                    currPieceLocs[i].x,
+                    currPieceLocs[i].y + 1
+                );
+                currTileObj.type = this.tileTypes.EMPTY;
+                swapTileObj.type = this.tileTypes.FALLING;
+            }
+        }
+    }
+
+    noCollisionRight(x, y) {
+        if (x === 9) {
+            return false;
+        }
+        return this.getTileObj(x + 1, y).type === this.tileTypes.EMPTY;
+    }
+
+    noCollisionLeft(x, y) {
+        if (x === 0) {
+            return false;
+        }
+        return this.getTileObj(x - 1, y).type === this.tileTypes.EMPTY;
+    }
+
+    noCollisionDown(x, y) {
+        if (y === 21) {
+            return false;
+        }
+        return this.getTileObj(x, y + 1).type === this.tileTypes.EMPTY;
     }
 
     //let a piece fall if it can, and return new state for rendering
@@ -130,76 +214,76 @@ class App extends Component {
         if (
             newState.data.every(row => {
                 return row.every(tile => {
-                    return tile.type !== "falling";
+                    return tile.type !== this.tileTypes.FALLING;
                 });
             })
         ) {
             switch (newState.nextPiece) {
                 case "o":
-                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 0).isPivot = true;
-                    this.getTileObj(5, 0).type = "falling";
+                    this.getTileObj(5, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(5, 0).isPivot = true;
-                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 1).isPivot = true;
-                    this.getTileObj(5, 1).type = "falling";
+                    this.getTileObj(5, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(5, 1).isPivot = true;
                     newState.activePieceBottom = 1;
                     break;
 
                 case "i":
-                    this.getTileObj(4, 0).type = "falling";
-                    this.getTileObj(4, 1).type = "falling";
-                    this.getTileObj(4, 1).isPivot = true;;
-                    this.getTileObj(4, 2).type = "falling";
-                    this.getTileObj(4, 3).type = "falling";
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 1).isPivot = true;
+                    this.getTileObj(4, 2).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 3).type = this.tileTypes.FALLING;
                     newState.activePieceBottom = 3;
                     break;
 
                 case "s":
-                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 0).isPivot = true;
-                    this.getTileObj(5, 0).type = "falling";
-                    this.getTileObj(4, 1).type = "falling";
-                    this.getTileObj(3, 1).type = "falling";
+                    this.getTileObj(5, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
+                    this.getTileObj(3, 1).type = this.tileTypes.FALLING;
                     newState.activePieceBottom = 1;
                     break;
 
                 case "z":
-                    this.getTileObj(3, 0).type = "falling";
-                    this.getTileObj(4, 0).isPivot = "falling";
+                    this.getTileObj(3, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 0).isPivot = this.tileTypes.FALLING;
                     this.getTileObj(4, 0).isPivot = true;
-                    this.getTileObj(4, 1).type = "falling";
-                    this.getTileObj(5, 1).type = "falling";
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
+                    this.getTileObj(5, 1).type = this.tileTypes.FALLING;
                     newState.activePieceBottom = 1;
                     break;
 
                 case "l":
-                    this.getTileObj(4, 0).type = "falling";
-                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 1).isPivot = true;
-                    this.getTileObj(4, 2).type = "falling";
-                    this.getTileObj(4, 3).type = "falling";
-                    this.getTileObj(5, 3).type = "falling";
+                    this.getTileObj(4, 2).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 3).type = this.tileTypes.FALLING;
+                    this.getTileObj(5, 3).type = this.tileTypes.FALLING;
                     break;
 
                 case "j":
-                    this.getTileObj(4, 0).type = "falling";
-                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 1).isPivot = true;
-                    this.getTileObj(4, 2).type = "falling";
-                    this.getTileObj(4, 3).type = "falling";
-                    this.getTileObj(3, 3).type = "falling";
+                    this.getTileObj(4, 2).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 3).type = this.tileTypes.FALLING;
+                    this.getTileObj(3, 3).type = this.tileTypes.FALLING;
                     newState.activePieceBottom = 3;
                     break;
 
                 case "t": //t
                 default:
-                    this.getTileObj(3, 0).type = "falling";
-                    this.getTileObj(4, 0).type = "falling";
+                    this.getTileObj(3, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 0).isPivot = true;
-                    this.getTileObj(5, 0).type = "falling";
-                    this.getTileObj(4, 1).type = "falling";
+                    this.getTileObj(5, 0).type = this.tileTypes.FALLING;
+                    this.getTileObj(4, 1).type = this.tileTypes.FALLING;
                     newState.activePieceBottom = 1;
             }
         }
@@ -212,7 +296,9 @@ class App extends Component {
         let newState = state;
         newState.data = newState.data.map(row => {
             return row.map(tile => {
-                return tile.type === "falling" ? this.newTileObj("locked") : tile;
+                return tile.type === "falling"
+                    ? this.newTileObj("locked")
+                    : tile;
             });
         });
         return newState;
@@ -237,7 +323,10 @@ class App extends Component {
 
         //render app
         return (
-            <div className="app flex-container" onKeyDown={(e) => this.movePiece(e)}>
+            <div
+                className="app flex-container"
+                onKeyDown={e => this.movePiece(e)}
+            >
                 <div className="col1">
                     <div className="app-header">
                         <h2 id="title">REACTRIS</h2>
