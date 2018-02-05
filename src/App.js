@@ -51,15 +51,11 @@ class App extends Component {
     movePiece(e) {
         e.preventDefault();
         const currPieceLocs = this.getCurrPieceLocs();
-        console.log(currPieceLocs);
         if (e.key === "ArrowLeft") {
-            console.log("moving left")
             this.movePieceLeft(currPieceLocs);
         } else if (e.key === "ArrowRight") {
-            console.log("moving right")
             this.movePieceRight(currPieceLocs);
         } else if (e.key === "ArrowDown") {
-            console.log("moving down")
             this.movePieceDown(currPieceLocs);
         }
     }
@@ -77,7 +73,7 @@ class App extends Component {
     }
 
     movePieceLeft(currPieceLocs) {
-        if (currPieceLocs.every(tile => this.noCollisionLeft(tile.x, tile.y))) {
+        if (this.noCollisionLeft(currPieceLocs)) {
             for (let i = 0; i < currPieceLocs.length; i++) {
                 let currTileObj = this.getTileObj(
                     currPieceLocs[i].x,
@@ -94,9 +90,7 @@ class App extends Component {
     }
 
     movePieceRight(currPieceLocs) {
-        if (
-            currPieceLocs.every(tile => this.noCollisionRight(tile.x, tile.y))
-        ) {
+        if (this.noCollisionRight(currPieceLocs)) {
             for (let i = currPieceLocs.length - 1; i >= 0; i--) {
                 let currTileObj = this.getTileObj(
                     currPieceLocs[i].x,
@@ -113,8 +107,7 @@ class App extends Component {
     }
 
     movePieceDown(currPieceLocs) {
-        if (currPieceLocs.every(tile => this.noCollisionDown(tile.x, tile.y))) {
-            console.log("its safe!");
+        if (this.noCollisionDown(currPieceLocs)) {
             for (let i = currPieceLocs.length - 1; i >= 0; i--) {
                 let currTileObj = this.getTileObj(
                     currPieceLocs[i].x,
@@ -130,25 +123,16 @@ class App extends Component {
         }
     }
 
-    noCollisionRight(x, y) {
-        if (x === 9) {
-            return false;
-        }
-        return this.getTileObj(x + 1, y).type === this.tileTypes.EMPTY;
+    noCollisionRight(currPieceLocs) {
+        let pieceLocs = currPieceLocs.slice(); // make new copy
     }
 
-    noCollisionLeft(x, y) {
-        if (x === 0) {
-            return false;
-        }
-        return this.getTileObj(x - 1, y).type === this.tileTypes.EMPTY;
+    noCollisionLeft(currPieceLocs) {
+        let pieceLocs = currPieceLocs.slice(); // make new copy
     }
 
-    noCollisionDown(x, y) {
-        if (y === 21) {
-            return false;
-        }
-        return this.getTileObj(x, y + 1).type === this.tileTypes.EMPTY;
+    noCollisionDown(currPieceLocs) {
+        let pieceLocs = currPieceLocs.slice(); // make new copy
     }
 
     //let a piece fall if it can, and return new state for rendering
@@ -228,7 +212,6 @@ class App extends Component {
                     this.getTileObj(4, 1).isPivot = true;
                     this.getTileObj(5, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(5, 1).isPivot = true;
-                    newState.activePieceBottom = 1;
                     break;
 
                 case "i":
@@ -237,7 +220,6 @@ class App extends Component {
                     this.getTileObj(4, 1).isPivot = true;
                     this.getTileObj(4, 2).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 3).type = this.tileTypes.FALLING;
-                    newState.activePieceBottom = 3;
                     break;
 
                 case "s":
@@ -246,16 +228,14 @@ class App extends Component {
                     this.getTileObj(5, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(3, 1).type = this.tileTypes.FALLING;
-                    newState.activePieceBottom = 1;
                     break;
 
                 case "z":
                     this.getTileObj(3, 0).type = this.tileTypes.FALLING;
-                    this.getTileObj(4, 0).isPivot = this.tileTypes.FALLING;
+                    this.getTileObj(4, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 0).isPivot = true;
                     this.getTileObj(4, 1).type = this.tileTypes.FALLING;
                     this.getTileObj(5, 1).type = this.tileTypes.FALLING;
-                    newState.activePieceBottom = 1;
                     break;
 
                 case "l":
@@ -274,7 +254,6 @@ class App extends Component {
                     this.getTileObj(4, 2).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 3).type = this.tileTypes.FALLING;
                     this.getTileObj(3, 3).type = this.tileTypes.FALLING;
-                    newState.activePieceBottom = 3;
                     break;
 
                 case "t": //t
@@ -284,7 +263,6 @@ class App extends Component {
                     this.getTileObj(4, 0).isPivot = true;
                     this.getTileObj(5, 0).type = this.tileTypes.FALLING;
                     this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-                    newState.activePieceBottom = 1;
             }
         }
         newState.nextPiece = this.chooseRandomNewPiece();
