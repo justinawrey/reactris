@@ -20,8 +20,6 @@ class App extends Component {
             score: 0,
             nextPiece: this.chooseRandomNewPiece()
         };
-
-        this.getTileObj(5, 10).type = this.tileTypes.LOCKED;
     }
 
     newTileObj(type, isPivot = false) {
@@ -206,8 +204,12 @@ class App extends Component {
         let pieceLocs = currPieceLocs.slice(); // make new copy
     }
 
-    dropPiece(currPieceLocs) {
-        let pieceLocs = currPieceLocs.slice(); // make new copy
+    dropPiece() {   // hackey approach
+        for (let i = 0; i < 25; i++) {
+            this.movePieceDown(this.getCurrPieceLocs());
+        }
+        this.lockPiece(this.getCurrPieceLocs());
+        this.generateNewPiece();
     }
 
     //return new state for rendering with new piece falling on top
@@ -289,7 +291,7 @@ class App extends Component {
             this.generateNewPiece();
         } else {
             let currPieceLocs = this.getCurrPieceLocs();
-            if(!this.movePieceDown(currPieceLocs)){
+            if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
                 this.lockPiece(currPieceLocs);
                 // clear
                 // bump down
@@ -300,12 +302,10 @@ class App extends Component {
     }
 
     render() {
-        //get rows to render
         const rowsToRender = this.state.data.map((row, index) => {
             return <Row rowData={row} key={index} />;
         });
 
-        //render app
         return (
             <div className="app flex-container" onKeyDown={e => this.handleKeyPress(e)}>
                 <div className="col1">
