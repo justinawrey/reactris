@@ -20,6 +20,13 @@ class App extends Component {
             score: 0,
             nextPiece: this.chooseRandomNewPiece()
         };
+
+        for (let i = 1; i < this.maxColumns; i++) {
+            this.getTileObj(i, 19).type = this.tileTypes.LOCKED;                        
+            this.getTileObj(i, 21).type = this.tileTypes.LOCKED;
+        }
+        this.getTileObj(5, 20).type = this.tileTypes.LOCKED;
+
     }
 
     newTileObj(type, isPivot = false) {
@@ -204,11 +211,12 @@ class App extends Component {
         let pieceLocs = currPieceLocs.slice(); // make new copy
     }
 
-    dropPiece() {   // hackey approach
-        for (let i = 0; i < 25; i++) {
+    dropPiece() {
+        for (let i = 0; i < this.maxRows + 1; i++) {
             this.movePieceDown(this.getCurrPieceLocs());
         }
         this.lockPiece(this.getCurrPieceLocs());
+        this.clearRows();
         this.generateNewPiece();
     }
 
@@ -285,6 +293,33 @@ class App extends Component {
         }
     }
 
+    clearRows() {
+        for (let row = this.maxRows - 1; row >= 0; row--) {
+            if(this.checkForFullRow(row)){
+                this.clearRow(row);
+                row++;
+            }   
+        }
+    }
+
+    clearRow(row) {
+        for (let col = 0; col < this.maxColumns; col++) {
+            this.getTileObj(col, row).type = this.tileTypes.EMPTY;
+        }
+        for (let currRow = row - 1; currRow >= 0; currRow--) {
+            for (let col = 0; col < this.maxColumns; col++) {
+                if (this.getTileObj(col, currRow).type === this.tileTypes.LOCKED) {
+                    this.getTileObj(col, currRow).type = this.tileTypes.EMPTY;
+                    this.getTileObj(col, currRow + 1).type = this.tileTypes.LOCKED;
+                }
+            }
+        } 
+    }
+
+    checkForFullRow(row){
+        return this.state.data[row].every(tile => {return tile.type === this.tileTypes.LOCKED;});
+    }
+
     tick() {
         //check for no falling pieces before generating a new one
         if (this.state.data.every(row => {return row.every(tile => {return tile.type !== this.tileTypes.FALLING;});})) {
@@ -293,8 +328,7 @@ class App extends Component {
             let currPieceLocs = this.getCurrPieceLocs();
             if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
                 this.lockPiece(currPieceLocs);
-                // clear
-                // bump down
+                this.clearRows();
                 this.generateNewPiece();
             }
         }
