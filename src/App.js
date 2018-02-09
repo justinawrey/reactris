@@ -372,17 +372,18 @@ class App extends Component {
         return (
             <div className="app flex-container" onKeyDown={e => this.handleKeyPress(e)} tabIndex="0">
                 <div id="col1">
-                    <h2 id="title">REACTRIS</h2>
+                    <h1 id="title">REACTRIS</h1>
                     <div className="game-board">
                         {gameRows}
                     </div>
                 </div>
                 <div id="col2">
-                    <h3 id="title-score">SCORE: {this.state.score}</h3>
-                    <h3 id="title-next-piece">NEXT PIECE</h3>
+                    <h2 id="title-next-piece">NEXT PIECE</h2>
                     <div id="next-piece-slot">
                         {nextPieceRows}
                     </div>
+                    <h2 className="score">SCORE</h2>
+                    <h3 className="score">{this.state.score}</h3>
                 </div>
             </div>  
         );

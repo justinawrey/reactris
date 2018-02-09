@@ -1,10 +1,6 @@
 .flex-container {
-    display: flex;
-    justify-content: flex-start; 
-}
-
-#col1, #col2 {
-    margin: 0% 3% 0% 3%;
+    display: flex; 
+    justify-content: center;
 }
 
 #title, #title-next-piece {
@@ -12,9 +8,16 @@
     text-align: center;
 }
 
-#title-score {
+#title-next-piece {
+    margin-top: 66px;
+}
+
+#col2 {
+    margin-left: 3%;
+}
+
+.score {
     text-align: center;
-    margin-top: 40px;
 }
 
 .app {
