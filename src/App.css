@@ -11,6 +11,10 @@
     margin: 5px;
 }
 
+.app {
+    outline: none;
+}
+
 .next-piece-slot{
 background-color: lightgrey;
 width: 150px;

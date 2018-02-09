@@ -20,13 +20,7 @@ class App extends Component {
             score: 0,
             nextPiece: this.chooseRandomNewPiece()
         };
-
-        for (let i = 1; i < this.maxColumns; i++) {
-            this.getTileObj(i, 19).type = this.tileTypes.LOCKED;                        
-            this.getTileObj(i, 21).type = this.tileTypes.LOCKED;
-        }
-        this.getTileObj(5, 20).type = this.tileTypes.LOCKED;
-
+        setInterval(() => this.tick(), 500);
     }
 
     newTileObj(type, isPivot = false) {
@@ -216,8 +210,9 @@ class App extends Component {
             this.movePieceDown(this.getCurrPieceLocs());
         }
         this.lockPiece(this.getCurrPieceLocs());
-        this.clearRows();
+        let scoreGain = this.addScore(this.clearRows());
         this.generateNewPiece();
+        this.setState({score: this.state.score + scoreGain});
     }
 
     //return new state for rendering with new piece falling on top
@@ -294,12 +289,15 @@ class App extends Component {
     }
 
     clearRows() {
+        let clearedRows = 0;
         for (let row = this.maxRows - 1; row >= 0; row--) {
             if(this.checkForFullRow(row)){
                 this.clearRow(row);
+                clearedRows++;
                 row++;
             }   
         }
+        return clearedRows;
     }
 
     clearRow(row) {
@@ -316,23 +314,43 @@ class App extends Component {
         } 
     }
 
-    checkForFullRow(row){
+    checkForFullRow(row) {
         return this.state.data[row].every(tile => {return tile.type === this.tileTypes.LOCKED;});
+    }
+
+    addScore(numRowsCleared) {
+        if (numRowsCleared === 1) {
+            return 40;
+        } else if (numRowsCleared === 2) {
+            return 100;
+        } else if (numRowsCleared === 3) {
+            return 300;
+        } else if (numRowsCleared === 4) {
+            return 1200;
+        } else {
+            return numRowsCleared * 300;
+        }
     }
 
     tick() {
         //check for no falling pieces before generating a new one
+        let scoreGained = 0;
         if (this.state.data.every(row => {return row.every(tile => {return tile.type !== this.tileTypes.FALLING;});})) {
             this.generateNewPiece();
         } else {
             let currPieceLocs = this.getCurrPieceLocs();
             if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
                 this.lockPiece(currPieceLocs);
-                this.clearRows();
+                scoreGained = this.addScore(this.clearRows());
                 this.generateNewPiece();
             }
         }
-        this.setState({data: this.state.data});
+        this.setState({data: this.state.data,
+                       score: this.state.score + scoreGained});
+    }
+
+    componentDidMount() {
+        document.getElementsByClassName("app")[0].focus();
     }
 
     render() {
@@ -341,24 +359,19 @@ class App extends Component {
         });
 
         return (
-            <div className="app flex-container" onKeyDown={e => this.handleKeyPress(e)}>
+            <div className="app flex-container" onKeyDown={e => this.handleKeyPress(e)} tabIndex="0">
                 <div className="col1">
-                    <div className="app-header">
-                        <h2 id="title">REACTRIS</h2>
-                    </div> 
-                    <div className="game-board">{rowsToRender}</div>
+                    <h2 id="title">REACTRIS</h2>
+                    <div className="game-board">
+                        {rowsToRender}
+                    </div>
                 </div>
                 <div className="col2">
-                    <div className="score">
-                        <Score value={this.state.score} />
-                    </div>
-                    <div className="next-piece-header">
-                        <h3>NEXT PIECE</h3>
-                    </div>
+                    <Score value={this.state.score} />
+                    <h3>NEXT PIECE</h3>
                     <div className="next-piece-slot">
                         {this.state.nextPiece}
                     </div>
-                    <button onClick={() => this.tick()}> tick </button>
                 </div>
             </div>  
         );
