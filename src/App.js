@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { Row } from "./Row";
 import "./App.css";
+import * as Generator from "./generator";
 
 class App extends Component {
     constructor(props) {
@@ -10,14 +11,12 @@ class App extends Component {
         this.colors = ["red", "orange", "pink", "yellow", "white"];
         this.maxRows = 22;
         this.maxColumns = 10;
-        this.tileTypes = Object.freeze({
-            FALLING: "falling",
-            EMPTY: "empty",
-            LOCKED: "locked"
-        });
         this.state = {
-            data: this.initializeEmptyBoard(),
             score: 0,
+            data: this.initializeEmptyBoard(this.maxColumns, this.maxRows),
+            nextPieceData: this.initializeEmptyBoard(6, 6),
+            piece: this.chooseRandomNewPiece(),
+            color: this.chooseRandomNewColor(),
             nextPiece: this.chooseRandomNewPiece(),
             nextColor: this.chooseRandomNewColor()
         };
@@ -28,15 +27,19 @@ class App extends Component {
         return this.state.data[y][x];
     }
 
-    initializeEmptyBoard() {
+    getPreviewTile(x, y) {
+        return this.state.nextPieceData[y][x];
+    }
+
+    initializeEmptyBoard(width, height) {
         let initData = [];
-        for (let row = 0; row < this.maxRows; row++) {
+        for (let row = 0; row < height; row++) {
             initData.push([]);
-            for (let col = 0; col < this.maxColumns; col++) {
+            for (let col = 0; col < width; col++) {
                 initData[row].push({
-                    type: this.tileTypes.EMPTY,
+                    type: Generator.tileTypes.EMPTY,
                     isPivot: false,
-                    color: "none"
+                    color: "empty"
                 });
             }
         }
@@ -67,14 +70,15 @@ class App extends Component {
         } else if (e.key === " ") {
             this.dropPiece(currPieceLocs);
         }
-        this.setState({data: this.state.data});
+        this.setState({data: this.state.data,
+            nextPieceData: this.state.nextPieceData});
     }
 
     getCurrPieceLocs() {
         let currPieceLocs = [];
         for (let row = 0; row < this.maxRows; row++) {
             for (let col = 0; col < this.maxColumns; col++) {
-                if (this.getTile(col, row).type === this.tileTypes.FALLING) {
+                if (this.getTile(col, row).type === Generator.tileTypes.FALLING) {
                     currPieceLocs.push({ x: col, y: row });
                 }
             }
@@ -146,7 +150,7 @@ class App extends Component {
             let checkTileY = Number(key);
             if(checkTileX >= this.maxColumns)
                 return false;
-            else if(this.getTile(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -172,7 +176,7 @@ class App extends Component {
             let checkTileY = Number(key);
             if(checkTileX < 0)
                 return false;
-            else if(this.getTile(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -198,7 +202,7 @@ class App extends Component {
             let checkTileX = Number(key);
             if(checkTileY >= this.maxRows)
                 return false;
-            else if(this.getTile(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -223,107 +227,70 @@ class App extends Component {
         this.setState({score: this.state.score + scoreGain});
     }
 
-    //return new state for rendering with new piece falling on top
     generateNewPiece() {
-        switch (this.state.nextPiece) {
+        let gameOrigin = {x: 4, y: 0};
+        let previewOrigin = {x: 2, y: 1};
+        this.state.nextPieceData.map(row => {row.map(tile => {tile.color = "empty";});});
+
+        switch (this.state.piece) {
         case "o":
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;
-            this.getTile(4, 0).isPivot = true;
-            this.getTile(5, 0).type = this.tileTypes.FALLING;
-            this.getTile(5, 0).color = this.state.nextColor;
-            this.getTile(5, 0).isPivot = true;
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;
-            this.getTile(4, 1).isPivot = true;
-            this.getTile(5, 1).type = this.tileTypes.FALLING;
-            this.getTile(5, 1).color = this.state.nextColor;
-            this.getTile(5, 1).isPivot = true;
+            Generator.generateO((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
             break;
-
-        case "i":
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;            
-            this.getTile(4, 1).isPivot = true;
-            this.getTile(4, 2).type = this.tileTypes.FALLING;
-            this.getTile(4, 2).color = this.state.nextColor;
-            this.getTile(4, 3).type = this.tileTypes.FALLING;
-            this.getTile(4, 3).color = this.state.nextColor;            
+        case "i":            
+            Generator.generateI((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
             break;
-
         case "s":
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;            
-            this.getTile(4, 0).isPivot = true;
-            this.getTile(5, 0).type = this.tileTypes.FALLING;
-            this.getTile(5, 0).color = this.state.nextColor;            
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;            
-            this.getTile(3, 1).type = this.tileTypes.FALLING;
-            this.getTile(3, 1).color = this.state.nextColor;            
+            Generator.generateS((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);           
             break;
-
-        case "z":
-            this.getTile(3, 0).type = this.tileTypes.FALLING;
-            this.getTile(3, 0).color = this.state.nextColor;            
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;            
-            this.getTile(4, 0).isPivot = true;
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;            
-            this.getTile(5, 1).type = this.tileTypes.FALLING;
-            this.getTile(5, 1).color = this.state.nextColor;            
+        case "z": 
+            Generator.generateZ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
             break;
-
-        case "l":
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;            
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;            
-            this.getTile(4, 1).isPivot = true;
-            this.getTile(4, 2).type = this.tileTypes.FALLING;
-            this.getTile(4, 2).color = this.state.nextColor;            
-            this.getTile(4, 3).type = this.tileTypes.FALLING;
-            this.getTile(4, 3).color = this.state.nextColor;            
-            this.getTile(5, 3).type = this.tileTypes.FALLING;
-            this.getTile(5, 3).color = this.state.nextColor;            
+        case "l":  
+            Generator.generateL((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
             break;
-
-        case "j":
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;            
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;            
-            this.getTile(4, 1).isPivot = true;
-            this.getTile(4, 2).type = this.tileTypes.FALLING;
-            this.getTile(4, 2).color = this.state.nextColor;            
-            this.getTile(4, 3).type = this.tileTypes.FALLING;
-            this.getTile(4, 3).color = this.state.nextColor;            
-            this.getTile(3, 3).type = this.tileTypes.FALLING;
-            this.getTile(3, 3).color = this.state.nextColor;            
+        case "j":    
+            Generator.generateJ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
             break;
-
         case "t": //t
         default:
-            this.getTile(3, 0).type = this.tileTypes.FALLING;
-            this.getTile(3, 0).color = this.state.nextColor;            
-            this.getTile(4, 0).type = this.tileTypes.FALLING;
-            this.getTile(4, 0).color = this.state.nextColor;            
-            this.getTile(4, 0).isPivot = true;
-            this.getTile(5, 0).type = this.tileTypes.FALLING;
-            this.getTile(5, 0).color = this.state.nextColor;            
-            this.getTile(4, 1).type = this.tileTypes.FALLING;
-            this.getTile(4, 1).color = this.state.nextColor;            
+            Generator.generateT((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);   
         }
-        this.setState({nextPiece: this.chooseRandomNewPiece(),
-            nextColor: this.chooseRandomNewColor()});
+
+        switch (this.state.nextPiece) {
+        case "o":
+            Generator.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.state.nextColor);
+            break;
+        case "i":            
+            Generator.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.state.nextColor);            
+            break;
+        case "s":
+            Generator.generateS((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);            
+            break;
+        case "z": 
+            Generator.generateZ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);
+            break;
+        case "l":  
+            Generator.generateL((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.state.nextColor);
+            break;
+        case "j":    
+            Generator.generateJ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
+            break;
+        case "t": //t
+        default:
+            Generator.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);                        
+        }
+
+        this.setState({
+            piece: this.state.nextPiece,
+            color: this.state.nextColor,
+            nextPiece: this.chooseRandomNewPiece(),
+            nextColor: this.chooseRandomNewColor(),
+        });
     }
 
     lockPiece(currPieceLocs) {
         for (let pieceLoc in currPieceLocs) {
-            this.getTile(currPieceLocs[pieceLoc].x, currPieceLocs[pieceLoc].y).type = this.tileTypes.LOCKED;
+            this.getTile(currPieceLocs[pieceLoc].x, currPieceLocs[pieceLoc].y).type = Generator.tileTypes.LOCKED;
         }
     }
 
@@ -341,12 +308,12 @@ class App extends Component {
 
     clearRow(row) {
         for (let col = 0; col < this.maxColumns; col++) {
-            this.getTile(col, row).type = this.tileTypes.EMPTY;
+            this.getTile(col, row).type = Generator.tileTypes.EMPTY;
             this.getTile(col, row).color = "none";
         }
         for (let currRow = row - 1; currRow >= 0; currRow--) {
             for (let col = 0; col < this.maxColumns; col++) {
-                if (this.getTile(col, currRow).type === this.tileTypes.LOCKED) {
+                if (this.getTile(col, currRow).type === Generator.tileTypes.LOCKED) {
                     this.swapTileContents(col, currRow, col, currRow + 1);
                 }
             }
@@ -354,7 +321,7 @@ class App extends Component {
     }
 
     checkForFullRow(row) {
-        return this.state.data[row].every(tile => {return tile.type === this.tileTypes.LOCKED;});
+        return this.state.data[row].every(tile => {return tile.type === Generator.tileTypes.LOCKED;});
     }
 
     addScore(numRowsCleared) {
@@ -374,7 +341,7 @@ class App extends Component {
     tick() {
         //check for no falling pieces before generating a new one
         let scoreGained = 0;
-        if (this.state.data.every(row => {return row.every(tile => {return tile.type !== this.tileTypes.FALLING;});})) {
+        if (this.state.data.every(row => {return row.every(tile => {return tile.type !== Generator.tileTypes.FALLING;});})) {
             this.generateNewPiece();
         } else {
             let currPieceLocs = this.getCurrPieceLocs();
@@ -385,6 +352,7 @@ class App extends Component {
             }
         }
         this.setState({data: this.state.data,
+            nextPieceData: this.state.nextPieceData,
             score: this.state.score + scoreGained});
     }
 
@@ -393,7 +361,11 @@ class App extends Component {
     }
 
     render() {
-        const rowsToRender = this.state.data.map((row, index) => {
+        const gameRows = this.state.data.map((row, index) => {
+            return <Row rowData={row} key={index} />;
+        });
+
+        const nextPieceRows = this.state.nextPieceData.map((row, index) => {
             return <Row rowData={row} key={index} />;
         });
 
@@ -402,14 +374,14 @@ class App extends Component {
                 <div id="col1">
                     <h2 id="title">REACTRIS</h2>
                     <div className="game-board">
-                        {rowsToRender}
+                        {gameRows}
                     </div>
                 </div>
                 <div id="col2">
                     <h3 id="title-score">SCORE: {this.state.score}</h3>
                     <h3 id="title-next-piece">NEXT PIECE</h3>
                     <div id="next-piece-slot">
-                        {this.state.nextPiece}
+                        {nextPieceRows}
                     </div>
                 </div>
             </div>  
