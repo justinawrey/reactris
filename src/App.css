@@ -3,20 +3,28 @@
     justify-content: flex-start; 
 }
 
-.col1, .col2 {
+#col1, #col2 {
     margin: 0% 3% 0% 3%;
 }
 
-#title {
+#title, #title-next-piece {
     margin: 5px;
+    text-align: center;
+}
+
+#title-score {
+    text-align: center;
+    margin-top: 40px;
 }
 
 .app {
     outline: none;
 }
 
-.next-piece-slot{
-background-color: lightgrey;
-width: 150px;
-height: 150px;
+#next-piece-slot{
+    border: 1px solid grey;
+    background-color: #EAF3FF;
+    border-radius: 4px;
+    width: 150px;
+    height: 150px;
 }

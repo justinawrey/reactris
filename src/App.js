@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { Row } from "./Row";
-import { Score } from "./Score";
 import "./App.css";
 
 class App extends Component {
@@ -8,6 +7,7 @@ class App extends Component {
         super(props);
 
         this.pieces = ["o", "i", "s", "z", "l", "j", "t"];
+        this.colors = ["red", "orange", "pink", "yellow", "white"];
         this.maxRows = 22;
         this.maxColumns = 10;
         this.tileTypes = Object.freeze({
@@ -18,19 +18,13 @@ class App extends Component {
         this.state = {
             data: this.initializeEmptyBoard(),
             score: 0,
-            nextPiece: this.chooseRandomNewPiece()
+            nextPiece: this.chooseRandomNewPiece(),
+            nextColor: this.chooseRandomNewColor()
         };
         setInterval(() => this.tick(), 500);
     }
 
-    newTileObj(type, isPivot = false) {
-        return {
-            type: type,
-            isPivot: isPivot
-        };
-    }
-
-    getTileObj(x, y) {
+    getTile(x, y) {
         return this.state.data[y][x];
     }
 
@@ -39,14 +33,22 @@ class App extends Component {
         for (let row = 0; row < this.maxRows; row++) {
             initData.push([]);
             for (let col = 0; col < this.maxColumns; col++) {
-                initData[row].push(this.newTileObj(this.tileTypes.EMPTY));
+                initData[row].push({
+                    type: this.tileTypes.EMPTY,
+                    isPivot: false,
+                    color: "none"
+                });
             }
         }
         return initData;
     }
 
     chooseRandomNewPiece() {
-        return this.pieces[Math.floor(Math.random() * 7)];
+        return this.pieces[Math.floor(Math.random() * this.pieces.length)];
+    }
+
+    chooseRandomNewColor() {
+        return this.colors[Math.floor(Math.random() * this.colors.length)];
     }
 
     handleKeyPress(e) {
@@ -72,7 +74,7 @@ class App extends Component {
         let currPieceLocs = [];
         for (let row = 0; row < this.maxRows; row++) {
             for (let col = 0; col < this.maxColumns; col++) {
-                if (this.getTileObj(col, row).type === this.tileTypes.FALLING) {
+                if (this.getTile(col, row).type === this.tileTypes.FALLING) {
                     currPieceLocs.push({ x: col, y: row });
                 }
             }
@@ -80,13 +82,23 @@ class App extends Component {
         return currPieceLocs;
     }
 
+    swapTileContents(x1, y1, x2, y2) {
+        let tile1 = this.getTile(x1, y1);
+        let tile2 = this.getTile(x2, y2);
+        let temp1 = Object.assign({}, tile1);
+        for (let key in tile2) {
+            tile1[key] = tile2[key];
+        }
+        for (let key in temp1) {
+            tile2[key] = temp1[key];
+        }
+    }
+
     movePieceLeft(currPieceLocs) {
         if (this.noCollisionLeft(currPieceLocs)) {
             for (let i = 0; i < currPieceLocs.length; i++) {
-                let currTileObj = this.getTileObj(currPieceLocs[i].x, currPieceLocs[i].y);
-                let swapTileObj = this.getTileObj(currPieceLocs[i].x - 1, currPieceLocs[i].y);
-                currTileObj.type = this.tileTypes.EMPTY;
-                swapTileObj.type = this.tileTypes.FALLING;
+                this.swapTileContents(currPieceLocs[i].x, currPieceLocs[i].y, 
+                    currPieceLocs[i].x - 1, currPieceLocs[i].y);              
             }
             return true;
         }
@@ -96,10 +108,8 @@ class App extends Component {
     movePieceRight(currPieceLocs) {
         if (this.noCollisionRight(currPieceLocs)) {
             for (let i = currPieceLocs.length - 1; i >= 0; i--) {
-                let currTileObj = this.getTileObj(currPieceLocs[i].x, currPieceLocs[i].y);
-                let swapTileObj = this.getTileObj(currPieceLocs[i].x + 1, currPieceLocs[i].y);
-                currTileObj.type = this.tileTypes.EMPTY;
-                swapTileObj.type = this.tileTypes.FALLING;
+                this.swapTileContents(currPieceLocs[i].x, currPieceLocs[i].y, 
+                    currPieceLocs[i].x + 1, currPieceLocs[i].y);                               
             }
             return true;
         }
@@ -109,10 +119,8 @@ class App extends Component {
     movePieceDown(currPieceLocs) {
         if (this.noCollisionDown(currPieceLocs)) {
             for (let i = currPieceLocs.length - 1; i >= 0; i--) {
-                let currTileObj = this.getTileObj(currPieceLocs[i].x, currPieceLocs[i].y);
-                let swapTileObj = this.getTileObj(currPieceLocs[i].x, currPieceLocs[i].y + 1);
-                currTileObj.type = this.tileTypes.EMPTY;
-                swapTileObj.type = this.tileTypes.FALLING;
+                this.swapTileContents(currPieceLocs[i].x, currPieceLocs[i].y, 
+                    currPieceLocs[i].x, currPieceLocs[i].y + 1);                               
             }
             return true;
         }
@@ -138,7 +146,7 @@ class App extends Component {
             let checkTileY = Number(key);
             if(checkTileX >= this.maxColumns)
                 return false;
-            else if(this.getTileObj(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -164,7 +172,7 @@ class App extends Component {
             let checkTileY = Number(key);
             if(checkTileX < 0)
                 return false;
-            else if(this.getTileObj(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -190,7 +198,7 @@ class App extends Component {
             let checkTileX = Number(key);
             if(checkTileY >= this.maxRows)
                 return false;
-            else if(this.getTileObj(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== this.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -219,72 +227,103 @@ class App extends Component {
     generateNewPiece() {
         switch (this.state.nextPiece) {
         case "o":
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 0).isPivot = true;
-            this.getTileObj(5, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(5, 0).isPivot = true;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).isPivot = true;
-            this.getTileObj(5, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(5, 1).isPivot = true;
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;
+            this.getTile(4, 0).isPivot = true;
+            this.getTile(5, 0).type = this.tileTypes.FALLING;
+            this.getTile(5, 0).color = this.state.nextColor;
+            this.getTile(5, 0).isPivot = true;
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;
+            this.getTile(4, 1).isPivot = true;
+            this.getTile(5, 1).type = this.tileTypes.FALLING;
+            this.getTile(5, 1).color = this.state.nextColor;
+            this.getTile(5, 1).isPivot = true;
             break;
 
         case "i":
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).isPivot = true;
-            this.getTileObj(4, 2).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 3).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;            
+            this.getTile(4, 1).isPivot = true;
+            this.getTile(4, 2).type = this.tileTypes.FALLING;
+            this.getTile(4, 2).color = this.state.nextColor;
+            this.getTile(4, 3).type = this.tileTypes.FALLING;
+            this.getTile(4, 3).color = this.state.nextColor;            
             break;
 
         case "s":
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 0).isPivot = true;
-            this.getTileObj(5, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(3, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;            
+            this.getTile(4, 0).isPivot = true;
+            this.getTile(5, 0).type = this.tileTypes.FALLING;
+            this.getTile(5, 0).color = this.state.nextColor;            
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;            
+            this.getTile(3, 1).type = this.tileTypes.FALLING;
+            this.getTile(3, 1).color = this.state.nextColor;            
             break;
 
         case "z":
-            this.getTileObj(3, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 0).isPivot = true;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(5, 1).type = this.tileTypes.FALLING;
+            this.getTile(3, 0).type = this.tileTypes.FALLING;
+            this.getTile(3, 0).color = this.state.nextColor;            
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;            
+            this.getTile(4, 0).isPivot = true;
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;            
+            this.getTile(5, 1).type = this.tileTypes.FALLING;
+            this.getTile(5, 1).color = this.state.nextColor;            
             break;
 
         case "l":
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).isPivot = true;
-            this.getTileObj(4, 2).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 3).type = this.tileTypes.FALLING;
-            this.getTileObj(5, 3).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;            
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;            
+            this.getTile(4, 1).isPivot = true;
+            this.getTile(4, 2).type = this.tileTypes.FALLING;
+            this.getTile(4, 2).color = this.state.nextColor;            
+            this.getTile(4, 3).type = this.tileTypes.FALLING;
+            this.getTile(4, 3).color = this.state.nextColor;            
+            this.getTile(5, 3).type = this.tileTypes.FALLING;
+            this.getTile(5, 3).color = this.state.nextColor;            
             break;
 
         case "j":
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).isPivot = true;
-            this.getTileObj(4, 2).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 3).type = this.tileTypes.FALLING;
-            this.getTileObj(3, 3).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;            
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;            
+            this.getTile(4, 1).isPivot = true;
+            this.getTile(4, 2).type = this.tileTypes.FALLING;
+            this.getTile(4, 2).color = this.state.nextColor;            
+            this.getTile(4, 3).type = this.tileTypes.FALLING;
+            this.getTile(4, 3).color = this.state.nextColor;            
+            this.getTile(3, 3).type = this.tileTypes.FALLING;
+            this.getTile(3, 3).color = this.state.nextColor;            
             break;
 
         case "t": //t
         default:
-            this.getTileObj(3, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 0).isPivot = true;
-            this.getTileObj(5, 0).type = this.tileTypes.FALLING;
-            this.getTileObj(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(3, 0).type = this.tileTypes.FALLING;
+            this.getTile(3, 0).color = this.state.nextColor;            
+            this.getTile(4, 0).type = this.tileTypes.FALLING;
+            this.getTile(4, 0).color = this.state.nextColor;            
+            this.getTile(4, 0).isPivot = true;
+            this.getTile(5, 0).type = this.tileTypes.FALLING;
+            this.getTile(5, 0).color = this.state.nextColor;            
+            this.getTile(4, 1).type = this.tileTypes.FALLING;
+            this.getTile(4, 1).color = this.state.nextColor;            
         }
-        this.setState({nextPiece: this.chooseRandomNewPiece()});
+        this.setState({nextPiece: this.chooseRandomNewPiece(),
+            nextColor: this.chooseRandomNewColor()});
     }
 
     lockPiece(currPieceLocs) {
         for (let pieceLoc in currPieceLocs) {
-            this.getTileObj(currPieceLocs[pieceLoc].x, currPieceLocs[pieceLoc].y).type = this.tileTypes.LOCKED;
+            this.getTile(currPieceLocs[pieceLoc].x, currPieceLocs[pieceLoc].y).type = this.tileTypes.LOCKED;
         }
     }
 
@@ -302,13 +341,13 @@ class App extends Component {
 
     clearRow(row) {
         for (let col = 0; col < this.maxColumns; col++) {
-            this.getTileObj(col, row).type = this.tileTypes.EMPTY;
+            this.getTile(col, row).type = this.tileTypes.EMPTY;
+            this.getTile(col, row).color = "none";
         }
         for (let currRow = row - 1; currRow >= 0; currRow--) {
             for (let col = 0; col < this.maxColumns; col++) {
-                if (this.getTileObj(col, currRow).type === this.tileTypes.LOCKED) {
-                    this.getTileObj(col, currRow).type = this.tileTypes.EMPTY;
-                    this.getTileObj(col, currRow + 1).type = this.tileTypes.LOCKED;
+                if (this.getTile(col, currRow).type === this.tileTypes.LOCKED) {
+                    this.swapTileContents(col, currRow, col, currRow + 1);
                 }
             }
         } 
@@ -346,7 +385,7 @@ class App extends Component {
             }
         }
         this.setState({data: this.state.data,
-                       score: this.state.score + scoreGained});
+            score: this.state.score + scoreGained});
     }
 
     componentDidMount() {
@@ -360,16 +399,16 @@ class App extends Component {
 
         return (
             <div className="app flex-container" onKeyDown={e => this.handleKeyPress(e)} tabIndex="0">
-                <div className="col1">
+                <div id="col1">
                     <h2 id="title">REACTRIS</h2>
                     <div className="game-board">
                         {rowsToRender}
                     </div>
                 </div>
-                <div className="col2">
-                    <Score value={this.state.score} />
-                    <h3>NEXT PIECE</h3>
-                    <div className="next-piece-slot">
+                <div id="col2">
+                    <h3 id="title-score">SCORE: {this.state.score}</h3>
+                    <h3 id="title-next-piece">NEXT PIECE</h3>
+                    <div id="next-piece-slot">
                         {this.state.nextPiece}
                     </div>
                 </div>

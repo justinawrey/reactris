@@ -2,22 +2,34 @@
 .falling,
 .empty,
 .locked {
-    border: 1px solid black;
+    border: 1px solid grey;
+    border-radius: 4px;
     display: inline-block;
     width: 25px;
     height: 25px;
     margin: 1px;
 }
 
-.falling {
-    background-color: lightgreen;
-}
-/* empty tile */
 .empty {
-    background-color: lightgrey;
+    background-color: #EAF3FF;
 }
 
-/* locked tile */
-.locked {
-    background-color: pink;
+.red {
+    background-color: #14FFF7;
+}
+
+.orange {
+    background-color: #0BC9CD;
+}
+
+.pink {
+    background-color: #1D8A99;
+}
+
+.yellow {
+    background-color: #7C77B9;
+}
+
+.white {
+    background-color: #8FBFE0;
 }
