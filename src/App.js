@@ -11,16 +11,18 @@ class App extends Component {
         this.colors = ["red", "orange", "pink", "yellow", "white"];
         this.maxRows = 22;
         this.maxColumns = 10;
+        this.previewRows = 6;
+        this.previewColumns = 5;
         this.state = {
             score: 0,
             data: this.initializeEmptyBoard(this.maxColumns, this.maxRows),
-            nextPieceData: this.initializeEmptyBoard(6, 6),
+            nextPieceData: this.initializeEmptyBoard(this.previewColumns, this.previewRows),
             piece: this.chooseRandomNewPiece(),
             color: this.chooseRandomNewColor(),
             nextPiece: this.chooseRandomNewPiece(),
             nextColor: this.chooseRandomNewColor()
         };
-        setInterval(() => this.tick(), 500);
+        setInterval(() => this.tick(), 300);
     }
 
     getTile(x, y) {
@@ -79,7 +81,7 @@ class App extends Component {
         for (let row = 0; row < this.maxRows; row++) {
             for (let col = 0; col < this.maxColumns; col++) {
                 if (this.getTile(col, row).type === Generator.tileTypes.FALLING) {
-                    currPieceLocs.push({ x: col, y: row });
+                    currPieceLocs.push({ x: col, y: row, pivot: this.getTile(col, row).isPivot});
                 }
             }
         }
@@ -132,16 +134,15 @@ class App extends Component {
     }
 
     noCollisionRight(currPieceLocs) {
-        let pieceLocs = currPieceLocs.slice(); // make new copy
         let edgeMap = {};
-        for (let i in pieceLocs) {
-            let key = String(pieceLocs[i].y);
+        for (let i in currPieceLocs) {
+            let key = String(currPieceLocs[i].y);
             if (key in edgeMap){
-                if (pieceLocs[i].x > edgeMap[key]){
-                    edgeMap[key] = pieceLocs[i].x;
+                if (currPieceLocs[i].x > edgeMap[key]){
+                    edgeMap[key] = currPieceLocs[i].x;
                 }
             } else {
-                edgeMap[key] = pieceLocs[i].x;
+                edgeMap[key] = currPieceLocs[i].x;
             }
         }  
 
@@ -158,16 +159,15 @@ class App extends Component {
     }
 
     noCollisionLeft(currPieceLocs) {
-        let pieceLocs = currPieceLocs.slice(); // make new copy
         let edgeMap = {};
-        for (let i in pieceLocs) {
-            let key = String(pieceLocs[i].y);
+        for (let i in currPieceLocs) {
+            let key = String(currPieceLocs[i].y);
             if (key in edgeMap){
-                if (pieceLocs[i].x < edgeMap[key]){
-                    edgeMap[key] = pieceLocs[i].x;
+                if (currPieceLocs[i].x < edgeMap[key]){
+                    edgeMap[key] = currPieceLocs[i].x;
                 }
             } else {
-                edgeMap[key] = pieceLocs[i].x;
+                edgeMap[key] = currPieceLocs[i].x;
             }
         }  
 
@@ -184,16 +184,15 @@ class App extends Component {
     }
 
     noCollisionDown(currPieceLocs) {
-        let pieceLocs = currPieceLocs.slice(); // make new copy
         let edgeMap = {};
-        for (let i in pieceLocs) {
-            let key = String(pieceLocs[i].x);
+        for (let i in currPieceLocs) {
+            let key = String(currPieceLocs[i].x);
             if (key in edgeMap){
-                if (pieceLocs[i].y > edgeMap[key]){
-                    edgeMap[key] = pieceLocs[i].y;
+                if (currPieceLocs[i].y > edgeMap[key]){
+                    edgeMap[key] = currPieceLocs[i].y;
                 }
             } else {
-                edgeMap[key] = pieceLocs[i].y;
+                edgeMap[key] = currPieceLocs[i].y;
             }
         }  
 
@@ -210,11 +209,28 @@ class App extends Component {
     }
 
     rotatePieceLeft(currPieceLocs) {
-        let pieceLocs = currPieceLocs.slice(); // make new copy
+        if (this.getPivotPiece(this.adjustPosition(currPieceLocs))) {
+
+        }
     }
 
     rotatePieceRight(currPieceLocs) {
-        let pieceLocs = currPieceLocs.slice(); // make new copy
+        if (this.getPivotPiece(this.adjustPosition(currPieceLocs))) {
+            
+        }
+    }
+
+    getPivotPiece(currPieceLocs){
+        for (let pieceLoc in currPieceLocs) {
+            if(currPieceLocs[pieceLoc].pivot) {
+                return currPieceLocs[pieceLoc];
+            }
+        }
+        return false;
+    }
+
+    adjustPosition(currPieceLocs) {
+
     }
 
     dropPiece() {
@@ -229,7 +245,7 @@ class App extends Component {
 
     generateNewPiece() {
         let gameOrigin = {x: 4, y: 0};
-        let previewOrigin = {x: 2, y: 1};
+        let previewOrigin = {x: 1, y: 1};
         this.state.nextPieceData.map(row => {row.map(tile => {tile.color = "empty";});});
 
         switch (this.state.piece) {
@@ -261,7 +277,7 @@ class App extends Component {
             Generator.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.state.nextColor);
             break;
         case "i":            
-            Generator.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.state.nextColor);            
+            Generator.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
             break;
         case "s":
             Generator.generateS((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);            
