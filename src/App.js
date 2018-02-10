@@ -15,18 +15,18 @@ class App extends Component {
         this.previewColumns = 5;
         this.state = {
             score: 0,
-            data: this.initializeEmptyBoard(this.maxColumns, this.maxRows),
+            pieceData: this.initializeEmptyBoard(this.maxColumns, this.maxRows),
             nextPieceData: this.initializeEmptyBoard(this.previewColumns, this.previewRows),
             piece: this.chooseRandomNewPiece(),
             color: this.chooseRandomNewColor(),
             nextPiece: this.chooseRandomNewPiece(),
             nextColor: this.chooseRandomNewColor()
         };
-        setInterval(() => this.tick(), 300);
+        this.interval = setInterval(() => this.tick(), 300);
     }
 
     getTile(x, y) {
-        return this.state.data[y][x];
+        return this.state.pieceData[y][x];
     }
 
     getPreviewTile(x, y) {
@@ -72,7 +72,7 @@ class App extends Component {
         } else if (e.key === " ") {
             this.dropPiece(currPieceLocs);
         }
-        this.setState({data: this.state.data,
+        this.setState({pieceData: this.state.pieceData,
             nextPieceData: this.state.nextPieceData});
     }
 
@@ -209,14 +209,27 @@ class App extends Component {
     }
 
     rotatePieceLeft(currPieceLocs) {
-        if (this.getPivotPiece(this.adjustPosition(currPieceLocs))) {
-
-        }
+        let pivotPiece = this.getPivotPiece(this.adjustPosition(currPieceLocs));        
+        if (pivotPiece) {
+            let adjustedX = pivotPiece.x - 1;
+            let adjustedY = pivotPiece.y - 1;
+            let N = 3;
+            console.log(this.state.piece);
+            if (this.state.nextPiece === "i") N++;
+            for (let x = 0; x < Math.floor(N / 2); x++) {
+                for (let y = x; y < N - x - 1; y++) {
+                    this.swapTileContents(y + adjustedX, x + adjustedY, N - 1 - x + adjustedX, y + adjustedY);
+                    this.swapTileContents(N - 1 - x + adjustedX, y + adjustedY, N - 1 - y + adjustedX, N - 1 - x + adjustedY);
+                    this.swapTileContents(N - 1 - y + adjustedX, N - 1 - x + adjustedY, x + adjustedX, N - 1 - y + adjustedY);
+                }
+            } 
+        } 
     }
 
     rotatePieceRight(currPieceLocs) {
-        if (this.getPivotPiece(this.adjustPosition(currPieceLocs))) {
-            
+        let pivotPiece = this.getPivotPiece(this.adjustPosition(currPieceLocs));
+        if (pivotPiece) {
+
         }
     }
 
@@ -230,7 +243,7 @@ class App extends Component {
     }
 
     adjustPosition(currPieceLocs) {
-
+        return currPieceLocs;
     }
 
     dropPiece() {
@@ -247,6 +260,13 @@ class App extends Component {
         let gameOrigin = {x: 4, y: 0};
         let previewOrigin = {x: 1, y: 1};
         this.state.nextPieceData.map(row => {row.map(tile => {tile.color = "empty";});});
+
+        this.setState({
+            piece: this.state.nextPiece,
+            color: this.state.nextColor,
+            nextPiece: this.chooseRandomNewPiece(),
+            nextColor: this.chooseRandomNewColor(),
+        });
 
         switch (this.state.piece) {
         case "o":
@@ -295,13 +315,6 @@ class App extends Component {
         default:
             Generator.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);                        
         }
-
-        this.setState({
-            piece: this.state.nextPiece,
-            color: this.state.nextColor,
-            nextPiece: this.chooseRandomNewPiece(),
-            nextColor: this.chooseRandomNewColor(),
-        });
     }
 
     lockPiece(currPieceLocs) {
@@ -337,7 +350,7 @@ class App extends Component {
     }
 
     checkForFullRow(row) {
-        return this.state.data[row].every(tile => {return tile.type === Generator.tileTypes.LOCKED;});
+        return this.state.pieceData[row].every(tile => {return tile.type === Generator.tileTypes.LOCKED;});
     }
 
     addScore(numRowsCleared) {
@@ -357,7 +370,7 @@ class App extends Component {
     tick() {
         //check for no falling pieces before generating a new one
         let scoreGained = 0;
-        if (this.state.data.every(row => {return row.every(tile => {return tile.type !== Generator.tileTypes.FALLING;});})) {
+        if (this.state.pieceData.every(row => {return row.every(tile => {return tile.type !== Generator.tileTypes.FALLING;});})) {
             this.generateNewPiece();
         } else {
             let currPieceLocs = this.getCurrPieceLocs();
@@ -367,7 +380,7 @@ class App extends Component {
                 this.generateNewPiece();
             }
         }
-        this.setState({data: this.state.data,
+        this.setState({pieceData: this.state.pieceData,
             nextPieceData: this.state.nextPieceData,
             score: this.state.score + scoreGained});
     }
@@ -377,7 +390,7 @@ class App extends Component {
     }
 
     render() {
-        const gameRows = this.state.data.map((row, index) => {
+        const gameRows = this.state.pieceData.map((row, index) => {
             return <Row rowData={row} key={index} />;
         });
 
