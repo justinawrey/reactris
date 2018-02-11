@@ -369,19 +369,16 @@ class App extends Component {
             this.lockPiece(currPieceLocs);
             let scoreGained = this.addScore(this.clearRows());
             let newPiece = this.generateNewPiece();
-            this.setState({pieceData: this.state.pieceData,
-                nextPieceData: this.state.nextPieceData,
-                score: this.state.score + scoreGained,
+            this.setState({score: this.state.score + scoreGained,
                 piece: newPiece.piece,
                 color: newPiece.color,
                 nextPiece: newPiece.nextPiece,
                 nextColor: newPiece.nextColor
             });        
-        } else {
-            this.setState({pieceData: this.state.pieceData,
-                nextPieceData: this.state.nextPieceData,
-            });
         }
+        this.setState({pieceData: this.state.pieceData,
+            nextPieceData: this.state.nextPieceData,
+        });
     }
 
     componentDidMount() {
