@@ -72,8 +72,7 @@ class App extends Component {
         } else if (e.key === " ") {
             this.dropPiece(currPieceLocs);
         }
-        this.setState({pieceData: this.state.pieceData,
-            nextPieceData: this.state.nextPieceData});
+        this.setState({pieceData: this.state.pieceData});
     }
 
     getCurrPieceLocs() {
@@ -214,7 +213,6 @@ class App extends Component {
             let adjustedX = pivotPiece.x - 1;
             let adjustedY = pivotPiece.y - 1;
             let N = 3;
-            console.log(this.state.piece);
             if (this.state.nextPiece === "i") N++;
             for (let x = 0; x < Math.floor(N / 2); x++) {
                 for (let y = x; y < N - x - 1; y++) {
@@ -247,28 +245,22 @@ class App extends Component {
     }
 
     dropPiece() {
-        for (let i = 0; i < this.maxRows + 1; i++) {
+        for (let i = 0; i < this.maxRows; i++) {
             this.movePieceDown(this.getCurrPieceLocs());
         }
-        this.lockPiece(this.getCurrPieceLocs());
-        let scoreGain = this.addScore(this.clearRows());
-        this.generateNewPiece();
-        this.setState({score: this.state.score + scoreGain});
+        this.tick();
     }
 
     generateNewPiece() {
         let gameOrigin = {x: 4, y: 0};
         let previewOrigin = {x: 1, y: 1};
-        this.state.nextPieceData.map(row => {row.map(tile => {tile.color = "empty";});});
-
-        this.setState({
-            piece: this.state.nextPiece,
+        let newPiece = {piece: this.state.nextPiece,
             color: this.state.nextColor,
             nextPiece: this.chooseRandomNewPiece(),
-            nextColor: this.chooseRandomNewColor(),
-        });
+            nextColor: this.chooseRandomNewColor()
+        };
 
-        switch (this.state.piece) {
+        switch (newPiece.piece) {
         case "o":
             Generator.generateO((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
             break;
@@ -292,7 +284,8 @@ class App extends Component {
             Generator.generateT((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);   
         }
 
-        switch (this.state.nextPiece) {
+        this.state.nextPieceData.map(row => {return row.map(tile => {return tile.color = "empty";});});        
+        switch (newPiece.nextPiece) {
         case "o":
             Generator.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.state.nextColor);
             break;
@@ -315,6 +308,8 @@ class App extends Component {
         default:
             Generator.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);                        
         }
+
+        return newPiece;
     }
 
     lockPiece(currPieceLocs) {
@@ -369,24 +364,40 @@ class App extends Component {
 
     tick() {
         //check for no falling pieces before generating a new one
-        let scoreGained = 0;
-        if (this.state.pieceData.every(row => {return row.every(tile => {return tile.type !== Generator.tileTypes.FALLING;});})) {
-            this.generateNewPiece();
+        let currPieceLocs = this.getCurrPieceLocs();
+        if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
+            this.lockPiece(currPieceLocs);
+            let scoreGained = this.addScore(this.clearRows());
+            let newPiece = this.generateNewPiece();
+            this.setState({pieceData: this.state.pieceData,
+                nextPieceData: this.state.nextPieceData,
+                score: this.state.score + scoreGained,
+                piece: newPiece.piece,
+                color: newPiece.color,
+                nextPiece: newPiece.nextPiece,
+                nextColor: newPiece.nextColor
+            });        
         } else {
-            let currPieceLocs = this.getCurrPieceLocs();
-            if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
-                this.lockPiece(currPieceLocs);
-                scoreGained = this.addScore(this.clearRows());
-                this.generateNewPiece();
-            }
+            this.setState({pieceData: this.state.pieceData,
+                nextPieceData: this.state.nextPieceData,
+            });
         }
-        this.setState({pieceData: this.state.pieceData,
-            nextPieceData: this.state.nextPieceData,
-            score: this.state.score + scoreGained});
     }
 
     componentDidMount() {
         document.getElementsByClassName("app")[0].focus();
+        let newPiece = this.generateNewPiece();
+        this.setState({pieceData: this.state.pieceData,
+            nextPieceData: this.state.nextPieceData,
+            piece: newPiece.piece,
+            color: newPiece.color,
+            nextPiece: newPiece.nextPiece,
+            nextColor: newPiece.nextColor
+        });                       
+    }
+
+    componentDidUpdate() {
+        console.log(this.state.piece);
     }
 
     render() {
