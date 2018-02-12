@@ -3,26 +3,46 @@ import { Row } from "./Row";
 import "./App.css";
 import * as Generator from "./generator";
 
+const maxRows = 22;
+const maxColumns = 10;
+const previewRows = 6;
+const previewColumns = 5; 
+const pieces = ["o", "i", "s", "z", "l", "j", "t"];
+const colors = ["red", "orange", "pink", "yellow", "white"];
+
 class App extends Component {
     constructor(props) {
         super(props);
-
-        this.pieces = ["o", "i", "s", "z", "l", "j", "t"];
-        this.colors = ["red", "orange", "pink", "yellow", "white"];
-        this.maxRows = 22;
-        this.maxColumns = 10;
-        this.previewRows = 6;
-        this.previewColumns = 5;
         this.state = {
             score: 0,
-            pieceData: this.initializeEmptyBoard(this.maxColumns, this.maxRows),
-            nextPieceData: this.initializeEmptyBoard(this.previewColumns, this.previewRows),
+            pieceData: this.initializeEmptyBoard(maxColumns, maxRows),
+            nextPieceData: this.initializeEmptyBoard(previewColumns, previewRows),
             piece: this.chooseRandomNewPiece(),
             color: this.chooseRandomNewColor(),
             nextPiece: this.chooseRandomNewPiece(),
             nextColor: this.chooseRandomNewColor()
         };
-        this.interval = setInterval(() => this.tick(), 300);
+    }
+
+    componentDidMount () {
+        this.interval = setInterval(() => this.tick(), 300);     
+        document.getElementsByClassName("app")[0].focus();
+        let newPiece = this.generateNewPiece();
+        this.setState({pieceData: this.state.pieceData,
+            nextPieceData: this.state.nextPieceData,
+            piece: newPiece.piece,
+            color: newPiece.color,
+            nextPiece: newPiece.nextPiece,
+            nextColor: newPiece.nextColor
+        });     
+    }
+
+    componentWillUnmount () {
+        clearInterval(this.interval);
+    }
+
+    componentDidUpdate() {
+        console.log(this.state);
     }
 
     getTile(x, y) {
@@ -49,11 +69,11 @@ class App extends Component {
     }
 
     chooseRandomNewPiece() {
-        return this.pieces[Math.floor(Math.random() * this.pieces.length)];
+        return pieces[Math.floor(Math.random() * pieces.length)];
     }
 
     chooseRandomNewColor() {
-        return this.colors[Math.floor(Math.random() * this.colors.length)];
+        return colors[Math.floor(Math.random() * colors.length)];
     }
 
     handleKeyPress(e) {
@@ -77,8 +97,8 @@ class App extends Component {
 
     getCurrPieceLocs() {
         let currPieceLocs = [];
-        for (let row = 0; row < this.maxRows; row++) {
-            for (let col = 0; col < this.maxColumns; col++) {
+        for (let row = 0; row < maxRows; row++) {
+            for (let col = 0; col < maxColumns; col++) {
                 if (this.getTile(col, row).type === Generator.tileTypes.FALLING) {
                     currPieceLocs.push({ x: col, y: row, pivot: this.getTile(col, row).isPivot});
                 }
@@ -148,7 +168,7 @@ class App extends Component {
         for (let key in edgeMap) {
             let checkTileX = edgeMap[key] + 1;
             let checkTileY = Number(key);
-            if(checkTileX >= this.maxColumns)
+            if(checkTileX >= maxColumns)
                 return false;
             else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
                 return false;
@@ -198,7 +218,7 @@ class App extends Component {
         for (let key in edgeMap) {
             let checkTileY = edgeMap[key] + 1;
             let checkTileX = Number(key);
-            if(checkTileY >= this.maxRows)
+            if(checkTileY >= maxRows)
                 return false;
             else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
                 return false;
@@ -245,7 +265,7 @@ class App extends Component {
     }
 
     dropPiece() {
-        for (let i = 0; i < this.maxRows; i++) {
+        for (let i = 0; i < maxRows; i++) {
             this.movePieceDown(this.getCurrPieceLocs());
         }
         this.tick();
@@ -320,7 +340,7 @@ class App extends Component {
 
     clearRows() {
         let clearedRows = 0;
-        for (let row = this.maxRows - 1; row >= 0; row--) {
+        for (let row = maxRows - 1; row >= 0; row--) {
             if(this.checkForFullRow(row)){
                 this.clearRow(row);
                 clearedRows++;
@@ -331,12 +351,12 @@ class App extends Component {
     }
 
     clearRow(row) {
-        for (let col = 0; col < this.maxColumns; col++) {
+        for (let col = 0; col < maxColumns; col++) {
             this.getTile(col, row).type = Generator.tileTypes.EMPTY;
             this.getTile(col, row).color = "none";
         }
         for (let currRow = row - 1; currRow >= 0; currRow--) {
-            for (let col = 0; col < this.maxColumns; col++) {
+            for (let col = 0; col < maxColumns; col++) {
                 if (this.getTile(col, currRow).type === Generator.tileTypes.LOCKED) {
                     this.swapTileContents(col, currRow, col, currRow + 1);
                 }
@@ -379,22 +399,6 @@ class App extends Component {
         this.setState({pieceData: this.state.pieceData,
             nextPieceData: this.state.nextPieceData,
         });
-    }
-
-    componentDidMount() {
-        document.getElementsByClassName("app")[0].focus();
-        let newPiece = this.generateNewPiece();
-        this.setState({pieceData: this.state.pieceData,
-            nextPieceData: this.state.nextPieceData,
-            piece: newPiece.piece,
-            color: newPiece.color,
-            nextPiece: newPiece.nextPiece,
-            nextColor: newPiece.nextColor
-        });                       
-    }
-
-    componentDidUpdate() {
-        console.log(this.state.piece);
     }
 
     render() {

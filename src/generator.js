@@ -87,4 +87,4 @@ function generateT(getTileFunc, x, y, color) {
     getTileFunc(x, y + 1).color = color;
 }
 
-export {generateO, generateI, generateS, generateZ, generateL, generateJ, generateT, tileTypes};
+export {generateO, generateI, generateS, generateZ, generateL, generateJ, generateT, tileTypes, pieces, colors};
