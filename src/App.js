@@ -1,48 +1,35 @@
 import React, { Component } from "react";
 import { Row } from "./Row";
 import "./App.css";
-import * as Generator from "./generator";
-
-const maxRows = 22;
-const maxColumns = 10;
-const previewRows = 6;
-const previewColumns = 5; 
-const pieces = ["o", "i", "s", "z", "l", "j", "t"];
-const colors = ["red", "orange", "pink", "yellow", "white"];
+import * as Utilities from "./utilities";
 
 class App extends Component {
     constructor(props) {
         super(props);
+        this.pieceSequence = this.newPieceSequence();
         this.state = {
             score: 0,
-            pieceData: this.initializeEmptyBoard(maxColumns, maxRows),
-            nextPieceData: this.initializeEmptyBoard(previewColumns, previewRows),
-            piece: this.chooseRandomNewPiece(),
-            color: this.chooseRandomNewColor(),
-            nextPiece: this.chooseRandomNewPiece(),
-            nextColor: this.chooseRandomNewColor()
+            pieceData: this.initializeEmptyBoard(Utilities.maxColumns, Utilities.maxRows),
+            nextPieceData: this.initializeEmptyBoard(Utilities.previewColumns, Utilities.previewRows),
+            piece: this.pieceSequence[0].type,
+            color: this.pieceSequence[0].color,
+            nextPiece: this.pieceSequence[1].type,
+            nextColor: this.pieceSequence[1].color
         };
     }
 
     componentDidMount () {
         this.interval = setInterval(() => this.tick(), 300);     
         document.getElementsByClassName("app")[0].focus();
-        let newPiece = this.generateNewPiece();
-        this.setState({pieceData: this.state.pieceData,
-            nextPieceData: this.state.nextPieceData,
-            piece: newPiece.piece,
-            color: newPiece.color,
-            nextPiece: newPiece.nextPiece,
-            nextColor: newPiece.nextColor
-        });     
+        this.showPieceOnBoard();
     }
 
     componentWillUnmount () {
         clearInterval(this.interval);
     }
 
-    componentDidUpdate() {
-        console.log(this.state);
+    componentWillUpdate() {
+        console.log(this.state.piece);
     }
 
     getTile(x, y) {
@@ -59,7 +46,7 @@ class App extends Component {
             initData.push([]);
             for (let col = 0; col < width; col++) {
                 initData[row].push({
-                    type: Generator.tileTypes.EMPTY,
+                    type: Utilities.tileTypes.EMPTY,
                     isPivot: false,
                     color: "empty"
                 });
@@ -68,12 +55,21 @@ class App extends Component {
         return initData;
     }
 
-    chooseRandomNewPiece() {
-        return pieces[Math.floor(Math.random() * pieces.length)];
+    newPieceSequence() {
+        let pieces = Utilities.pieces.slice();
+        let newSequence = [];
+        for (let i = 0; i < Utilities.pieces.length; i++) {
+            let randNum = Math.floor(Math.random() * pieces.length);
+            newSequence.push(pieces.splice(randNum, 1)[0]);
+        }
+        return newSequence;
     }
 
-    chooseRandomNewColor() {
-        return colors[Math.floor(Math.random() * colors.length)];
+    shiftPieceSequence() {
+        this.pieceSequence.shift();
+        if (this.pieceSequence.length === 2) {
+            this.pieceSequence = this.pieceSequence.concat(this.newPieceSequence());
+        }
     }
 
     handleKeyPress(e) {
@@ -92,14 +88,18 @@ class App extends Component {
         } else if (e.key === " ") {
             this.dropPiece(currPieceLocs);
         }
-        this.setState({pieceData: this.state.pieceData});
+        this.setState(prevState => {
+            return {
+                pieceData: prevState.pieceData
+            };
+        });
     }
 
     getCurrPieceLocs() {
         let currPieceLocs = [];
-        for (let row = 0; row < maxRows; row++) {
-            for (let col = 0; col < maxColumns; col++) {
-                if (this.getTile(col, row).type === Generator.tileTypes.FALLING) {
+        for (let row = 0; row < Utilities.maxRows; row++) {
+            for (let col = 0; col < Utilities.maxColumns; col++) {
+                if (this.getTile(col, row).type === Utilities.tileTypes.FALLING) {
                     currPieceLocs.push({ x: col, y: row, pivot: this.getTile(col, row).isPivot});
                 }
             }
@@ -168,9 +168,9 @@ class App extends Component {
         for (let key in edgeMap) {
             let checkTileX = edgeMap[key] + 1;
             let checkTileY = Number(key);
-            if(checkTileX >= maxColumns)
+            if(checkTileX >= Utilities.maxColumns)
                 return false;
-            else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== Utilities.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -195,7 +195,7 @@ class App extends Component {
             let checkTileY = Number(key);
             if(checkTileX < 0)
                 return false;
-            else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== Utilities.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -218,9 +218,9 @@ class App extends Component {
         for (let key in edgeMap) {
             let checkTileY = edgeMap[key] + 1;
             let checkTileX = Number(key);
-            if(checkTileY >= maxRows)
+            if(checkTileY >= Utilities.maxRows)
                 return false;
-            else if(this.getTile(checkTileX, checkTileY).type !== Generator.tileTypes.EMPTY) 
+            else if(this.getTile(checkTileX, checkTileY).type !== Utilities.tileTypes.EMPTY) 
                 return false;
         }
 
@@ -265,82 +265,81 @@ class App extends Component {
     }
 
     dropPiece() {
-        for (let i = 0; i < maxRows; i++) {
+        for (let i = 0; i < Utilities.maxRows; i++) {
             this.movePieceDown(this.getCurrPieceLocs());
         }
         this.tick();
     }
 
-    generateNewPiece() {
+    showPieceOnBoard() {
         let gameOrigin = {x: 4, y: 0};
         let previewOrigin = {x: 1, y: 1};
-        let newPiece = {piece: this.state.nextPiece,
-            color: this.state.nextColor,
-            nextPiece: this.chooseRandomNewPiece(),
-            nextColor: this.chooseRandomNewColor()
-        };
 
-        switch (newPiece.piece) {
+        switch (this.state.piece) {
         case "o":
-            Generator.generateO((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
+            Utilities.generateO((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
             break;
         case "i":            
-            Generator.generateI((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
+            Utilities.generateI((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
             break;
         case "s":
-            Generator.generateS((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);           
+            Utilities.generateS((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);           
             break;
         case "z": 
-            Generator.generateZ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
+            Utilities.generateZ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
             break;
         case "l":  
-            Generator.generateL((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
+            Utilities.generateL((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
             break;
         case "j":    
-            Generator.generateJ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
+            Utilities.generateJ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
             break;
         case "t": //t
         default:
-            Generator.generateT((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);   
+            Utilities.generateT((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);   
         }
 
         this.state.nextPieceData.map(row => {return row.map(tile => {return tile.color = "empty";});});        
-        switch (newPiece.nextPiece) {
+        switch (this.state.nextPiece) {
         case "o":
-            Generator.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.state.nextColor);
+            Utilities.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.state.nextColor);
             break;
         case "i":            
-            Generator.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
+            Utilities.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
             break;
         case "s":
-            Generator.generateS((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);            
+            Utilities.generateS((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);            
             break;
         case "z": 
-            Generator.generateZ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);
+            Utilities.generateZ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);
             break;
         case "l":  
-            Generator.generateL((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.state.nextColor);
+            Utilities.generateL((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.state.nextColor);
             break;
         case "j":    
-            Generator.generateJ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
+            Utilities.generateJ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
             break;
         case "t": //t
         default:
-            Generator.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);                        
+            Utilities.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);                        
         }
-
-        return newPiece;
+        this.setState(prevState => {
+            return {
+                pieceData: prevState.pieceData,
+                nextPieceData: prevState.nextPieceData,
+            };
+        });
     }
 
     lockPiece(currPieceLocs) {
         for (let pieceLoc in currPieceLocs) {
-            this.getTile(currPieceLocs[pieceLoc].x, currPieceLocs[pieceLoc].y).type = Generator.tileTypes.LOCKED;
+            this.getTile(currPieceLocs[pieceLoc].x, currPieceLocs[pieceLoc].y).type = Utilities.tileTypes.LOCKED;
         }
     }
 
     clearRows() {
         let clearedRows = 0;
-        for (let row = maxRows - 1; row >= 0; row--) {
+        for (let row = Utilities.maxRows - 1; row >= 0; row--) {
             if(this.checkForFullRow(row)){
                 this.clearRow(row);
                 clearedRows++;
@@ -351,13 +350,13 @@ class App extends Component {
     }
 
     clearRow(row) {
-        for (let col = 0; col < maxColumns; col++) {
-            this.getTile(col, row).type = Generator.tileTypes.EMPTY;
+        for (let col = 0; col < Utilities.maxColumns; col++) {
+            this.getTile(col, row).type = Utilities.tileTypes.EMPTY;
             this.getTile(col, row).color = "none";
         }
         for (let currRow = row - 1; currRow >= 0; currRow--) {
-            for (let col = 0; col < maxColumns; col++) {
-                if (this.getTile(col, currRow).type === Generator.tileTypes.LOCKED) {
+            for (let col = 0; col < Utilities.maxColumns; col++) {
+                if (this.getTile(col, currRow).type === Utilities.tileTypes.LOCKED) {
                     this.swapTileContents(col, currRow, col, currRow + 1);
                 }
             }
@@ -365,7 +364,7 @@ class App extends Component {
     }
 
     checkForFullRow(row) {
-        return this.state.pieceData[row].every(tile => {return tile.type === Generator.tileTypes.LOCKED;});
+        return this.state.pieceData[row].every(tile => {return tile.type === Utilities.tileTypes.LOCKED;});
     }
 
     addScore(numRowsCleared) {
@@ -388,16 +387,23 @@ class App extends Component {
         if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
             this.lockPiece(currPieceLocs);
             let scoreGained = this.addScore(this.clearRows());
-            let newPiece = this.generateNewPiece();
-            this.setState({score: this.state.score + scoreGained,
-                piece: newPiece.piece,
-                color: newPiece.color,
-                nextPiece: newPiece.nextPiece,
-                nextColor: newPiece.nextColor
-            });        
+            this.shiftPieceSequence();
+            this.setState(prevState => {
+                return {
+                    score: prevState.score + scoreGained,
+                    piece: this.pieceSequence[0].type,
+                    color: this.pieceSequence[0].color,
+                    nextPiece: this.pieceSequence[1].type,
+                    nextColor: this.pieceSequence[1].color
+                };
+            });
+            this.showPieceOnBoard();
         }
-        this.setState({pieceData: this.state.pieceData,
-            nextPieceData: this.state.nextPieceData,
+        this.setState(prevState => {
+            return {
+                pieceData: prevState.pieceData,
+                nextPieceData: prevState.nextPieceData,
+            };
         });
     }
 
