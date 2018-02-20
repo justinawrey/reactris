@@ -3,7 +3,7 @@ import "./Tile.css";
 
 class Tile extends Component {
     render() {
-        const className = `${this.props.type} ${this.props.color}`;
+        const className = `${this.props.tileType} ${this.props.color}`;
         return (
             <div className={className}>
             </div>

@@ -6,11 +6,14 @@ import * as Utilities from "./utilities";
 class App extends Component {
     constructor(props) {
         super(props);
+        this.score = 0;
         this.pieceSequence = this.newPieceSequence();
+        this.pieceData = this.initializeEmptyBoard(Utilities.maxColumns, Utilities.maxRows);
+        this.nextPieceData = this.initializeEmptyBoard(Utilities.previewColumns, Utilities.previewRows);
         this.state = {
-            score: 0,
-            pieceData: this.initializeEmptyBoard(Utilities.maxColumns, Utilities.maxRows),
-            nextPieceData: this.initializeEmptyBoard(Utilities.previewColumns, Utilities.previewRows),
+            score: this.score,
+            pieceData: this.pieceData,
+            nextPieceData: this.nextPieceData,
             piece: this.pieceSequence[0].type,
             color: this.pieceSequence[0].color,
             nextPiece: this.pieceSequence[1].type,
@@ -28,16 +31,12 @@ class App extends Component {
         clearInterval(this.interval);
     }
 
-    componentWillUpdate() {
-        console.log(this.state.piece);
-    }
-
     getTile(x, y) {
-        return this.state.pieceData[y][x];
+        return this.pieceData[y][x];
     }
 
     getPreviewTile(x, y) {
-        return this.state.nextPieceData[y][x];
+        return this.nextPieceData[y][x];
     }
 
     initializeEmptyBoard(width, height) {
@@ -88,10 +87,8 @@ class App extends Component {
         } else if (e.key === " ") {
             this.dropPiece(currPieceLocs);
         }
-        this.setState(prevState => {
-            return {
-                pieceData: prevState.pieceData
-            };
+        this.setState({
+            pieceData: this.pieceData
         });
     }
 
@@ -233,7 +230,7 @@ class App extends Component {
             let adjustedX = pivotPiece.x - 1;
             let adjustedY = pivotPiece.y - 1;
             let N = 3;
-            if (this.state.nextPiece === "i") N++;
+            if (this.pieceSequence[0].type === "i") N++;
             for (let x = 0; x < Math.floor(N / 2); x++) {
                 for (let y = x; y < N - x - 1; y++) {
                     this.swapTileContents(y + adjustedX, x + adjustedY, N - 1 - x + adjustedX, y + adjustedY);
@@ -245,10 +242,20 @@ class App extends Component {
     }
 
     rotatePieceRight(currPieceLocs) {
-        let pivotPiece = this.getPivotPiece(this.adjustPosition(currPieceLocs));
+        let pivotPiece = this.getPivotPiece(this.adjustPosition(currPieceLocs));        
         if (pivotPiece) {
-
-        }
+            let adjustedX = pivotPiece.x - 1;
+            let adjustedY = pivotPiece.y - 1;
+            let N = 3;
+            if (this.pieceSequence[0].type === "i") N++;
+            for (let x = 0; x < Math.floor(N / 2); x++) {
+                for (let y = x; y < N - x - 1; y++) {
+                    this.swapTileContents(y + adjustedX, x + adjustedY, N - 1 - x + adjustedX, y + adjustedY);
+                    this.swapTileContents(y + adjustedX, x + adjustedY, x + adjustedX, N - 1 - y + adjustedY);
+                    this.swapTileContents(x + adjustedX, N - 1 - y + adjustedY, N - 1 - y + adjustedX, N - 1 - x + adjustedY);
+                }
+            } 
+        } 
     }
 
     getPivotPiece(currPieceLocs){
@@ -275,59 +282,57 @@ class App extends Component {
         let gameOrigin = {x: 4, y: 0};
         let previewOrigin = {x: 1, y: 1};
 
-        switch (this.state.piece) {
+        switch (this.pieceSequence[0].type) {
         case "o":
-            Utilities.generateO((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
+            Utilities.generateO((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);
             break;
         case "i":            
-            Utilities.generateI((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);
+            Utilities.generateI((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);
             break;
         case "s":
-            Utilities.generateS((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);           
+            Utilities.generateS((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);           
             break;
         case "z": 
-            Utilities.generateZ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
+            Utilities.generateZ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);                       
             break;
         case "l":  
-            Utilities.generateL((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
+            Utilities.generateL((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);                       
             break;
         case "j":    
-            Utilities.generateJ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);                       
+            Utilities.generateJ((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);                       
             break;
         case "t": //t
         default:
-            Utilities.generateT((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.state.color);   
+            Utilities.generateT((x, y) => this.getTile(x, y), gameOrigin.x, gameOrigin.y, this.pieceSequence[0].color);   
         }
 
         this.state.nextPieceData.map(row => {return row.map(tile => {return tile.color = "empty";});});        
-        switch (this.state.nextPiece) {
+        switch (this.pieceSequence[1].type) {
         case "o":
-            Utilities.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.state.nextColor);
+            Utilities.generateO((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y + 1, this.pieceSequence[1].color);
             break;
         case "i":            
-            Utilities.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
+            Utilities.generateI((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.pieceSequence[1].color);            
             break;
         case "s":
-            Utilities.generateS((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);            
+            Utilities.generateS((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.pieceSequence[1].color);            
             break;
         case "z": 
-            Utilities.generateZ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);
+            Utilities.generateZ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.pieceSequence[1].color);
             break;
         case "l":  
-            Utilities.generateL((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.state.nextColor);
+            Utilities.generateL((x, y) => this.getPreviewTile(x, y), previewOrigin.x, previewOrigin.y, this.pieceSequence[1].color);
             break;
         case "j":    
-            Utilities.generateJ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.state.nextColor);            
+            Utilities.generateJ((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y, this.pieceSequence[1].color);            
             break;
         case "t": //t
         default:
-            Utilities.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.state.nextColor);                        
+            Utilities.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.pieceSequence[1].color);                        
         }
-        this.setState(prevState => {
-            return {
-                pieceData: prevState.pieceData,
-                nextPieceData: prevState.nextPieceData,
-            };
+        this.setState({
+            pieceData: this.pieceData,
+            nextPieceData: this.nextPieceData
         });
     }
 
@@ -364,7 +369,7 @@ class App extends Component {
     }
 
     checkForFullRow(row) {
-        return this.state.pieceData[row].every(tile => {return tile.type === Utilities.tileTypes.LOCKED;});
+        return this.pieceData[row].every(tile => {return tile.type === Utilities.tileTypes.LOCKED;});
     }
 
     addScore(numRowsCleared) {
@@ -388,22 +393,18 @@ class App extends Component {
             this.lockPiece(currPieceLocs);
             let scoreGained = this.addScore(this.clearRows());
             this.shiftPieceSequence();
-            this.setState(prevState => {
-                return {
-                    score: prevState.score + scoreGained,
-                    piece: this.pieceSequence[0].type,
-                    color: this.pieceSequence[0].color,
-                    nextPiece: this.pieceSequence[1].type,
-                    nextColor: this.pieceSequence[1].color
-                };
-            });
             this.showPieceOnBoard();
+            this.setState({
+                score: this.score + scoreGained,
+                piece: this.pieceSequence[0].type,
+                color: this.pieceSequence[0].color,
+                nextPiece: this.pieceSequence[1].type,
+                nextColor: this.pieceSequence[1].color
+            });
         }
-        this.setState(prevState => {
-            return {
-                pieceData: prevState.pieceData,
-                nextPieceData: prevState.nextPieceData,
-            };
+        this.setState({
+            pieceData: this.pieceData,
+            nextPieceData: this.nextPieceData,
         });
     }
 

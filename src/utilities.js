@@ -51,6 +51,7 @@ export function generateI(getTileFunc, x, y, color) {
     getTileFunc(x, y + 1).isPivot = true;
     getTileFunc(x, y + 2).type = tileTypes.FALLING;
     getTileFunc(x, y + 2).color = color;
+    getTileFunc(x, y + 2).isPivot = true;
     getTileFunc(x, y + 3).type = tileTypes.FALLING;
     getTileFunc(x, y + 3).color = color;
 }
