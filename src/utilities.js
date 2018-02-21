@@ -51,7 +51,7 @@ export function generateI(getTileFunc, x, y, color) {
     getTileFunc(x, y + 1).isPivot = true;
     getTileFunc(x, y + 2).type = tileTypes.FALLING;
     getTileFunc(x, y + 2).color = color;
-    getTileFunc(x, y + 2).isPivot = true;
+    getTileFunc(x, y + 2).isPivot = true;    
     getTileFunc(x, y + 3).type = tileTypes.FALLING;
     getTileFunc(x, y + 3).color = color;
 }
@@ -61,7 +61,7 @@ export function generateS(getTileFunc, x, y, color) {
     getTileFunc(x, y).color = color;           
     getTileFunc(x, y).isPivot = true;
     getTileFunc(x + 1, y).type = tileTypes.FALLING;
-    getTileFunc(x + 1, y).color =color;            
+    getTileFunc(x + 1, y).color = color;            
     getTileFunc(x, y + 1).type = tileTypes.FALLING;
     getTileFunc(x, y + 1).color = color;           
     getTileFunc(x - 1, y + 1).type = tileTypes.FALLING;

@@ -22,13 +22,32 @@ class App extends Component {
     }
 
     componentDidMount () {
-        this.interval = setInterval(() => this.tick(), 300);     
-        document.getElementsByClassName("app")[0].focus();
+        this.interval = setInterval(() => this.tick(), 300); 
+        
+        let app = document.getElementsByClassName("app")[0];
+        app.addEventListener("animationend", () => {
+            app.classList.remove("shake");
+        });        
+        app.focus();
+        
+        let scoreDivs = document.getElementsByClassName("score-animation");
+        Array.prototype.forEach.call(scoreDivs, elem => {
+            elem.addEventListener("animationend", () => {
+                elem.classList.remove("addscore");
+            });
+        });
         this.showPieceOnBoard();
     }
 
     componentWillUnmount () {
         clearInterval(this.interval);
+        document.getElementsByClassName("app")[0].removeEventListener("animationend");
+        document.getElementById("score-total").removeEventListener("animationend");
+
+        let scoreDivs = document.getElementsByClassName("score-animation");
+        Array.prototype.forEach.call(scoreDivs, elem => {
+            elem.removeEventListener("animationend");
+        });
     }
 
     getTile(x, y) {
@@ -81,10 +100,11 @@ class App extends Component {
         } else if (e.key === "ArrowDown") {
             this.movePieceDown(currPieceLocs);
         } else if (e.key === "z") {
-            this.rotatePieceLeft(currPieceLocs);
+            this.rotatePiece(currPieceLocs, (tl, tr, bl, br) => this.rotatePieceLeft(tl, tr, bl, br));
         } else if (e.key === "x") {
-            this.rotatePieceRight(currPieceLocs);
+            this.rotatePiece(currPieceLocs, (tl, tr, bl, br) => this.rotatePieceRight(tl, tr, bl, br));
         } else if (e.key === " ") {
+            document.getElementsByClassName("app")[0].classList.add("shake");
             this.dropPiece(currPieceLocs);
         }
         this.setState({
@@ -170,7 +190,6 @@ class App extends Component {
             else if(this.getTile(checkTileX, checkTileY).type !== Utilities.tileTypes.EMPTY) 
                 return false;
         }
-
         return true;   
     }
 
@@ -195,7 +214,6 @@ class App extends Component {
             else if(this.getTile(checkTileX, checkTileY).type !== Utilities.tileTypes.EMPTY) 
                 return false;
         }
-
         return true;   
     }
 
@@ -220,42 +238,54 @@ class App extends Component {
             else if(this.getTile(checkTileX, checkTileY).type !== Utilities.tileTypes.EMPTY) 
                 return false;
         }
-
         return true;
     }
 
-    rotatePieceLeft(currPieceLocs) {
-        let pivotPiece = this.getPivotPiece(this.adjustPosition(currPieceLocs));        
-        if (pivotPiece) {
+    rotatePiece(currPieceLocs, rotFunc) {
+        let pivotPiece = this.getPivotPiece(currPieceLocs);        
+        if (pivotPiece && this.pieceCanRotate(currPieceLocs)) {
             let adjustedX = pivotPiece.x - 1;
             let adjustedY = pivotPiece.y - 1;
             let N = 3;
             if (this.pieceSequence[0].type === "i") N++;
             for (let x = 0; x < Math.floor(N / 2); x++) {
                 for (let y = x; y < N - x - 1; y++) {
-                    this.swapTileContents(y + adjustedX, x + adjustedY, N - 1 - x + adjustedX, y + adjustedY);
-                    this.swapTileContents(N - 1 - x + adjustedX, y + adjustedY, N - 1 - y + adjustedX, N - 1 - x + adjustedY);
-                    this.swapTileContents(N - 1 - y + adjustedX, N - 1 - x + adjustedY, x + adjustedX, N - 1 - y + adjustedY);
+                    const topLeftTilePos = {x: y + adjustedX, y: x + adjustedY}; 
+                    const topRightTilePos = {x: N - 1 - x + adjustedX, y:  y + adjustedY};
+                    const bottomLeftTilePos = {x: x + adjustedX, y: N - 1 - y + adjustedY};
+                    const bottomRightTilePos = {x: N - 1 - y + adjustedX, y:  N - 1 - x + adjustedY};
+                    rotFunc(topLeftTilePos, topRightTilePos, bottomLeftTilePos, bottomRightTilePos);
                 }
             } 
         } 
     }
 
-    rotatePieceRight(currPieceLocs) {
-        let pivotPiece = this.getPivotPiece(this.adjustPosition(currPieceLocs));        
-        if (pivotPiece) {
-            let adjustedX = pivotPiece.x - 1;
-            let adjustedY = pivotPiece.y - 1;
-            let N = 3;
-            if (this.pieceSequence[0].type === "i") N++;
-            for (let x = 0; x < Math.floor(N / 2); x++) {
-                for (let y = x; y < N - x - 1; y++) {
-                    this.swapTileContents(y + adjustedX, x + adjustedY, N - 1 - x + adjustedX, y + adjustedY);
-                    this.swapTileContents(y + adjustedX, x + adjustedY, x + adjustedX, N - 1 - y + adjustedY);
-                    this.swapTileContents(x + adjustedX, N - 1 - y + adjustedY, N - 1 - y + adjustedX, N - 1 - x + adjustedY);
-                }
-            } 
-        } 
+    rotatePieceLeft(topLeftTilePos, topRightTilePos, bottomLeftTilePos, bottomRightTilePos) {
+        if ((this.getTile(topLeftTilePos.x, topLeftTilePos.y).type === Utilities.tileTypes.FALLING) ||
+            (this.getTile(topRightTilePos.x, topRightTilePos.y).type === Utilities.tileTypes.FALLING))
+            this.swapTileContents(topLeftTilePos.x, topLeftTilePos.y, topRightTilePos.x, topRightTilePos.y);
+
+        if ((this.getTile(topRightTilePos.x, topRightTilePos.y).type === Utilities.tileTypes.FALLING) ||
+            (this.getTile(bottomRightTilePos.x, bottomRightTilePos.y).type === Utilities.tileTypes.FALLING))
+            this.swapTileContents(topRightTilePos.x, topRightTilePos.y, bottomRightTilePos.x, bottomRightTilePos.y);
+
+        if ((this.getTile(bottomRightTilePos.x, bottomRightTilePos.y).type === Utilities.tileTypes.FALLING) ||
+            (this.getTile(bottomLeftTilePos.x, bottomLeftTilePos.y).type === Utilities.tileTypes.FALLING))
+            this.swapTileContents(bottomRightTilePos.x, bottomRightTilePos.y, bottomLeftTilePos.x, bottomLeftTilePos.y);
+    }
+
+    rotatePieceRight(topLeftTilePos, topRightTilePos, bottomLeftTilePos, bottomRightTilePos) {
+        if ((this.getTile(topLeftTilePos.x, topLeftTilePos.y).type === Utilities.tileTypes.FALLING) ||
+            (this.getTile(topRightTilePos.x, topRightTilePos.y).type === Utilities.tileTypes.FALLING))
+            this.swapTileContents(topLeftTilePos.x, topLeftTilePos.y, topRightTilePos.x, topRightTilePos.y);
+
+        if ((this.getTile(topLeftTilePos.x, topLeftTilePos.y).type === Utilities.tileTypes.FALLING) ||
+            (this.getTile(bottomLeftTilePos.x, bottomLeftTilePos.y).type === Utilities.tileTypes.FALLING))
+            this.swapTileContents(topLeftTilePos.x, topLeftTilePos.y, bottomLeftTilePos.x, bottomLeftTilePos.y);
+
+        if ((this.getTile(bottomRightTilePos.x, bottomRightTilePos.y).type === Utilities.tileTypes.FALLING) ||
+            (this.getTile(bottomLeftTilePos.x, bottomLeftTilePos.y).type === Utilities.tileTypes.FALLING))
+            this.swapTileContents(bottomLeftTilePos.x, bottomLeftTilePos.y, bottomRightTilePos.x, bottomRightTilePos.y);
     }
 
     getPivotPiece(currPieceLocs){
@@ -267,8 +297,34 @@ class App extends Component {
         return false;
     }
 
-    adjustPosition(currPieceLocs) {
-        return currPieceLocs;
+    pieceCanRotate(currPieceLocs) {
+        let pivotPiece = this.getPivotPiece(currPieceLocs);        
+        if (pivotPiece) {
+            if (pivotPiece.x === 0 || pivotPiece.x === Utilities.maxColumns - 1) return false;
+            let adjustedX = pivotPiece.x - 1;
+            let adjustedY = pivotPiece.y - 1;
+            let N = 3;
+            if (this.pieceSequence[0].type === "i") N++;
+            for (let x = 0; x < Math.floor(N / 2); x++) {
+                for (let y = x; y < N - x - 1; y++) {
+                    const topLeftTile = this.getTile(y + adjustedX, x + adjustedY);
+                    const topRightTile = this.getTile(N - 1 - x + adjustedX, y + adjustedY);
+                    const bottomRightTile = this.getTile(N - 1 - y + adjustedX, N - 1 - x + adjustedY);
+                    const bottomLeftTile = this.getTile(x + adjustedX, N - 1 - y + adjustedY);
+                    if ((topLeftTile.type === Utilities.tileTypes.LOCKED && topRightTile.type === Utilities.tileTypes.FALLING)       ||
+                        (topLeftTile.type === Utilities.tileTypes.FALLING && topRightTile.type === Utilities.tileTypes.LOCKED)       ||
+                        (topLeftTile.type === Utilities.tileTypes.LOCKED && bottomLeftTile.type === Utilities.tileTypes.FALLING)   ||
+                        (topLeftTile.type === Utilities.tileTypes.FALLING && bottomLeftTile.type === Utilities.tileTypes.LOCKED)   ||
+                        (bottomRightTile.type === Utilities.tileTypes.LOCKED && bottomLeftTile.type === Utilities.tileTypes.FALLING) ||
+                        (bottomRightTile.type === Utilities.tileTypes.FALLING && bottomLeftTile.type === Utilities.tileTypes.LOCKED) ||
+                        (bottomRightTile.type === Utilities.tileTypes.LOCKED && topRightTile.type === Utilities.tileTypes.FALLING) ||
+                        (bottomRightTile.type === Utilities.tileTypes.FALLING && topRightTile.type === Utilities.tileTypes.LOCKED)) {
+                        return false;
+                    }
+                }
+            } 
+            return true;
+        } 
     }
 
     dropPiece() {
@@ -343,7 +399,7 @@ class App extends Component {
     }
 
     clearRows() {
-        let clearedRows = 0;
+        let clearedRows = [];
         for (let row = Utilities.maxRows - 1; row >= 0; row--) {
             if(this.checkForFullRow(row)){
                 this.clearRow(row);
@@ -392,10 +448,17 @@ class App extends Component {
         if(!this.movePieceDown(currPieceLocs)){ // we have a downwards collision
             this.lockPiece(currPieceLocs);
             let scoreGained = this.addScore(this.clearRows());
+            if (scoreGained > 0) {
+                const scoreDivs = document.getElementsByClassName("score-animation");
+                Array.prototype.forEach.call(scoreDivs, elem => {
+                    return elem.classList.add("addscore");
+                });
+            }
             this.shiftPieceSequence();
             this.showPieceOnBoard();
+            this.score += scoreGained;
             this.setState({
-                score: this.score + scoreGained,
+                score: this.score,
                 piece: this.pieceSequence[0].type,
                 color: this.pieceSequence[0].color,
                 nextPiece: this.pieceSequence[1].type,
@@ -430,8 +493,8 @@ class App extends Component {
                     <div id="next-piece-slot">
                         {nextPieceRows}
                     </div>
-                    <h2 className="score">SCORE</h2>
-                    <h3 className="score">{this.state.score}</h3>
+                    <h2 id="score" className="score-animation">SCORE</h2>
+                    <h3 id="score-total" className="score-animation">{this.state.score}</h3>
                 </div>
             </div>  
         );
