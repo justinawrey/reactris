@@ -99,9 +99,9 @@ class App extends Component {
             this.movePieceRight(currPieceLocs);
         } else if (e.key === "ArrowDown") {
             this.movePieceDown(currPieceLocs);
-        } else if (e.key === "z") {
+        } else if (e.key === "z" || e.key === "Z") {
             this.rotatePiece(currPieceLocs, (tl, tr, bl, br) => this.rotatePieceLeft(tl, tr, bl, br));
-        } else if (e.key === "x") {
+        } else if (e.key === "x" || e.key === "X") {
             this.rotatePiece(currPieceLocs, (tl, tr, bl, br) => this.rotatePieceRight(tl, tr, bl, br));
         } else if (e.key === " ") {
             document.getElementsByClassName("app")[0].classList.add("shake");
