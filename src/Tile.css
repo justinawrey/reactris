@@ -11,7 +11,11 @@
 }
 
 .empty {
-    background-color: #EAF3FF;
+    background-color: #D6E8FD;
+}
+
+.shadow {
+    background-color: #C7D3E0;
 }
 
 .red {

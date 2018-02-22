@@ -117,11 +117,44 @@ class App extends Component {
         for (let row = 0; row < Utilities.maxRows; row++) {
             for (let col = 0; col < Utilities.maxColumns; col++) {
                 if (this.getTile(col, row).type === Utilities.tileTypes.FALLING) {
-                    currPieceLocs.push({ x: col, y: row, pivot: this.getTile(col, row).isPivot});
+                    currPieceLocs.push({ x: col, y: row, color: this.getTile(col, row).color, pivot: this.getTile(col, row).isPivot});
                 }
             }
         }
         return currPieceLocs;
+    }
+
+    showShadow(currPieceLocs) {
+        for (let i = 0; i < Utilities.maxRows; i++) {
+            this.movePieceDown(this.getCurrPieceLocs());
+        }
+
+        // create shadow
+        let shadowPieceLocs = this.getCurrPieceLocs();
+        for (let piece in shadowPieceLocs) {
+            let tile = this.getTile(shadowPieceLocs[piece].x, shadowPieceLocs[piece].y);
+            tile.type = Utilities.tileTypes.EMPTY;
+            tile.color = "shadow";
+            tile.isPivot = false;
+        }
+
+        // restore old piece locs (before dropping)
+        for (let piece in currPieceLocs) {
+            let tile = this.getTile(currPieceLocs[piece].x, currPieceLocs[piece].y);
+            tile.type = Utilities.tileTypes.FALLING;
+            tile.color = currPieceLocs[piece].color;
+        }
+    }
+
+    removeShadow() {
+        for (let row = 0; row < Utilities.maxRows; row++) {
+            for (let col = 0; col < Utilities.maxColumns; col++) {
+                let tile = this.getTile(col, row);
+                if (tile.color === "shadow") {
+                    tile.color = "empty";
+                }
+            }
+        }
     }
 
     swapTileContents(x1, y1, x2, y2) {
@@ -386,6 +419,7 @@ class App extends Component {
         default:
             Utilities.generateT((x, y) => this.getPreviewTile(x, y), previewOrigin.x + 1, previewOrigin.y + 1, this.pieceSequence[1].color);                        
         }
+
         this.setState({
             pieceData: this.pieceData,
             nextPieceData: this.nextPieceData

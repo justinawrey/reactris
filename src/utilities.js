@@ -29,7 +29,7 @@ export const pieces = [{
 export const tileTypes = Object.freeze({
     FALLING: "falling",
     EMPTY: "empty",
-    LOCKED: "locked"
+    LOCKED: "locked",
 });
 
 export function generateO(getTileFunc, x, y, color) {
