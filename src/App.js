@@ -529,6 +529,12 @@ class App extends Component {
                     </div>
                     <h2 id="score" className="score-animation">SCORE</h2>
                     <h3 id="score-total" className="score-animation">{this.state.score}</h3>
+                    <div id="controls">
+                    Move piece: &uarr;&darr;&larr;&rarr;<br/>
+                    Spin left:  z<br/>
+                    Spin right: x<br/>
+                    Drop piece: space<br/>
+                    </div>
                 </div>
             </div>  
         );

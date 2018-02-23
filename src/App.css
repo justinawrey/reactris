@@ -26,10 +26,15 @@ html {
     justify-content: center;
 }
 
-#title, #title-next-piece {
+#title, #title-next-piece, #next-piece-slot {
     margin: 5px;
     text-align: center;
     padding-bottom: 5px;
+}
+
+#controls {
+    position: absolute;
+    bottom: 0;
 }
 
 #title-next-piece {
@@ -38,6 +43,7 @@ html {
 
 #col2 {
     margin-left: 3%;
+    position: relative;
 }
 
 #score, #score-total {
